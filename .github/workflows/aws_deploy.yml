@@ -51,4 +51,4 @@ jobs:
       - name: Update ECS Service
         run: |
           # Update the ECS service to force a new deployment
-          aws ecs update-service --cluster GoApiCluster --service GoApiFargateService --force-new-deployment
+          aws ecs update-service --cluster GoApiInfraStack-GoApiClusterD2A0AA60-lZ8voGHK2Stj --service GoApiInfraStack-GoApiFargateService7D208A3F-diJOgcTrPlCR --force-new-deployment

@@ -1,0 +1,54 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - 'release_*'  # triggers on branches starting with "release_"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # change if needed
+
+      - name: Extract version from branch name
+        id: extract_version
+        run: |
+          echo "GITHUB_REF: $GITHUB_REF"
+          # This extracts the version after 'release_' from e.g. refs/heads/release_1.0.0
+          VERSION="${GITHUB_REF#refs/heads/release_}"
+          echo "Version extracted: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "::set-output name=version::$VERSION"
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Build Docker image
+        run: |
+          # Build the Docker image using your Dockerfile in the repository
+          docker build -t go-api .
+          # Tag the image with the version extracted from the branch
+          docker tag go-api:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}
+          # Also tag it as "latest" for convenience
+          docker tag go-api:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:latest
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:latest
+
+      - name: Update ECS Service
+        run: |
+          # Update the ECS service to force a new deployment
+          aws ecs update-service --cluster GoApiCluster --service GoApiFargateService --force-new-deployment

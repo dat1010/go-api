@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.RouterGroup) {
-	router.GET("/healthcheck", controllers.GetHealthCheck)
-	router.GET("/stats/weekly", controllers.GetWeeklyStats)
+func RegisterRoutes(r *gin.RouterGroup) {
+	r.GET("/healthcheck", controllers.GetHealthCheck)
+	r.GET("/stats/weekly", controllers.GetWeeklyStats)
 }

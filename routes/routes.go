@@ -7,4 +7,5 @@ import (
 
 func RegisterRoutes(r *gin.RouterGroup) {
     r.GET("/healthcheck", controllers.GetHealthCheck)
+    r.GET("/secrets", controllers.GetSecret)
 }

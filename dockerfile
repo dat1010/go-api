@@ -7,7 +7,7 @@ RUN go mod download
 # Copy the rest of the code and build
 COPY . .
 # Build the binary; disable CGO for a statically linked binary
-RUN CGO_ENABLED=0 GOOS=linux go build -a -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o main ./cmd/
 
 # Final Stage: Run the binary in a minimal container
 FROM alpine:latest
@@ -19,4 +19,3 @@ COPY --from=build /app/main .
 EXPOSE 8080
 # Start the application
 CMD ["./main"]
-

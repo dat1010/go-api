@@ -1,4 +1,4 @@
-module go-api
+module github.com/dat1010/go-api
 
 go 1.24.1
 

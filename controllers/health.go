@@ -9,7 +9,7 @@ type Health struct {
 	Version string `json:"version"`
 }
 
-var healthCheckData = Health{Version: "0.0.4"}
+var healthCheckData = Health{Version: "0.0.5"}
 
 func GetHealthCheck(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, healthCheckData)

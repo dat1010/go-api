@@ -83,13 +83,13 @@ jobs:
       - name: Update Production ECS Service
         run: |
           # Update the task definition to use the specified version
-          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition GoApiInfraStack-GoApiProdTaskDef --query 'taskDefinition' --output json)
+          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D --query 'taskDefinition' --output json)
           
           # Update the image in the task definition
           NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}" '.containerDefinitions[0].image = $IMAGE')
           
           # Register the new task definition
-          aws ecs register-task-definition --family GoApiInfraStack-GoApiProdTaskDef --container-definitions "$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions')" --cpu "$(echo $TASK_DEFINITION | jq '.cpu')" --memory "$(echo $TASK_DEFINITION | jq '.memory')" --task-role-arn "$(echo $TASK_DEFINITION | jq -r '.taskRoleArn')" --execution-role-arn "$(echo $TASK_DEFINITION | jq -r '.executionRoleArn')"
+          aws ecs register-task-definition --family GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D --container-definitions "$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions')" --cpu "$(echo $TASK_DEFINITION | jq '.cpu')" --memory "$(echo $TASK_DEFINITION | jq '.memory')" --task-role-arn "$(echo $TASK_DEFINITION | jq -r '.taskRoleArn')" --execution-role-arn "$(echo $TASK_DEFINITION | jq -r '.executionRoleArn')"
           
           # Deploy to production ECS service
-          aws ecs update-service --cluster GoApiProdInfraStack-GoApiProdClusterEF8B48A5-2CIzUbRY1I5e --service GoApiProdInfraStack-GoApiProdFargateService66083257-cRtuz0jq5YRJ --task-definition GoApiInfraStack-GoApiProdTaskDef --force-new-deployment
+          aws ecs update-service --cluster GoApiProdInfraStack-GoApiProdClusterEF8B48A5-2CIzUbRY1I5e --service GoApiProdInfraStack-GoApiProdFargateService66083257-cRtuz0jq5YRJ --task-definition GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D --force-new-deployment

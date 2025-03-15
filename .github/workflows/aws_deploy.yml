@@ -55,7 +55,7 @@ jobs:
       - name: Update Staging ECS Service with Secrets
         run: |
           # Retrieve the current staging task definition
-          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition <STAGING_TASK_DEF_NAME> --query 'taskDefinition' --output json)
+          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition GoApiInfraStackGoApiFargateServiceTaskDef1BE268E8 --query 'taskDefinition' --output json)
           
           # Update the image and inject the secret.
           # The "valueFrom" here uses your secret ARN appended with the JSON key (my_little_secret)

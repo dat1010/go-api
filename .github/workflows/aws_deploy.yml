@@ -114,5 +114,4 @@ jobs:
             --network-mode "$(echo $TASK_DEFINITION | jq -r '.networkMode')"
           
           # Deploy to production ECS service
-          aws ecs update-service --cluster GoApiProdInfraStack-GoApiProdClusterEF8B48A5-2CIzUbRY1I5e --service GoApiProdInfraStack-GoApiProdFargateService66083257-cRtuz0jq5YRJ --task-definition GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D --force-new-deployment
-          aws ecs update-service --cluster GoApiProdInfraStack-GoApiProdClusterEF8B48A5-2CIzUbRY1I5e --service GoApiProdInfraStack-GoApiProdFargateService66083257-cRtuz0jq5YRJ --task-definition GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D --force-new-deployment
+          aws ecs update-service --cluster GoApiProdInfraStack-GoApiProdClusterEF8B48A5-5wfdJ3sUtyug --service GoApiProdInfraStack-GoApiProdFargateService66083257-2grSv3vpcGFB --task-definition GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D --force-new-deployment

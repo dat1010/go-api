@@ -92,4 +92,4 @@ jobs:
           aws ecs register-task-definition --family GoApiInfraStack-GoApiProdTaskDef --container-definitions "$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions')" --cpu "$(echo $TASK_DEFINITION | jq '.cpu')" --memory "$(echo $TASK_DEFINITION | jq '.memory')" --task-role-arn "$(echo $TASK_DEFINITION | jq -r '.taskRoleArn')" --execution-role-arn "$(echo $TASK_DEFINITION | jq -r '.executionRoleArn')"
           
           # Deploy to production ECS service
-          aws ecs update-service --cluster GoApiInfraStack-GoApiProdCluster --service GoApiInfraStack-GoApiProdService --task-definition GoApiInfraStack-GoApiProdTaskDef --force-new-deployment
+          aws ecs update-service --cluster GoApiProdInfraStack-GoApiProdClusterEF8B48A5-2CIzUbRY1I5e --service GoApiProdInfraStack-GoApiProdFargateService66083257-cRtuz0jq5YRJ --task-definition GoApiInfraStack-GoApiProdTaskDef --force-new-deployment

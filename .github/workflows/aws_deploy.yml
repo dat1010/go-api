@@ -81,7 +81,7 @@ jobs:
           
           # Register the new task definition and capture its ARN
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --family <STAGING_TASK_DEF_FAMILY> \
+            --family GoApiInfraStackGoApiFargateServiceTaskDef1BE268E \
             --container-definitions "$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions')" \
             $CPU_PARAM $MEMORY_PARAM \
             --task-role-arn "$(echo $TASK_DEFINITION | jq -r '.taskRoleArn')" \

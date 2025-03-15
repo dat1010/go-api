@@ -1,12 +1,19 @@
-name: Deploy to Staging
+name: Deploy to Environments
 
 on:
   push:
     branches:
-      - 'release_*'  # triggers on branches starting with "release_"
+      - 'release_*'  # triggers on branches starting with "release_" for staging
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy to production (format: 1.0.0)'
+        required: true
+        type: string
 
 jobs:
-  deploy:
+  deploy-to-staging:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: staging
     steps:
@@ -48,7 +55,41 @@ jobs:
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:latest
 
-      - name: Update ECS Service
+      - name: Update Staging ECS Service
         run: |
           # Update the ECS service to force a new deployment
           aws ecs update-service --cluster GoApiInfraStack-GoApiClusterD2A0AA60-lZ8voGHK2Stj --service GoApiInfraStack-GoApiFargateService7D208A3F-diJOgcTrPlCR --force-new-deployment
+
+  deploy-to-production:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Set version from input
+        run: |
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Update Production ECS Service
+        run: |
+          # Update the task definition to use the specified version
+          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition GoApiInfraStack-GoApiProdTaskDef --query 'taskDefinition' --output json)
+          
+          # Update the image in the task definition
+          NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}" '.containerDefinitions[0].image = $IMAGE')
+          
+          # Register the new task definition
+          aws ecs register-task-definition --family GoApiInfraStack-GoApiProdTaskDef --container-definitions "$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions')" --cpu "$(echo $TASK_DEFINITION | jq '.cpu')" --memory "$(echo $TASK_DEFINITION | jq '.memory')" --task-role-arn "$(echo $TASK_DEFINITION | jq -r '.taskRoleArn')" --execution-role-arn "$(echo $TASK_DEFINITION | jq -r '.executionRoleArn')"
+          
+          # Deploy to production ECS service
+          aws ecs update-service --cluster GoApiInfraStack-GoApiProdCluster --service GoApiInfraStack-GoApiProdService --task-definition GoApiInfraStack-GoApiProdTaskDef --force-new-deployment

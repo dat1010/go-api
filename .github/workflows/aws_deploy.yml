@@ -59,12 +59,28 @@ jobs:
           
           # Update the image and inject the secret.
           # The "valueFrom" here uses your secret ARN appended with the JSON key (my_little_secret)
-          NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}" \
-            '.containerDefinitions[0].image = $IMAGE | .containerDefinitions[0].secrets = ([{
-               "name": "MY_LITTLE_SECRET",
-               "valueFrom": "arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50:my_little_secret::"
-            }])')
-          
+
+          NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION" | 
+            jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}" \
+               --arg VERSION "${{ env.VERSION }}" '
+                 .containerDefinitions[0].image = $IMAGE
+                 # Add a standard environment variable (not from an ARN)
+                 | .containerDefinitions[0].environment += [
+                   {
+                     "name": "VERSION",
+                     "value": $VERSION
+                   }
+                 ]
+                 # Keep your existing secrets references
+                 | .containerDefinitions[0].secrets = ([
+                   {
+                     "name": "MY_LITTLE_SECRET",
+                     "valueFrom": "arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50:my_little_secret::"
+                   }
+                 ])
+               '
+          )
+                    
           # Extract CPU and memory values if they exist
           CPU_VALUE=$(echo $TASK_DEFINITION | jq -r '.cpu')
           MEMORY_VALUE=$(echo $TASK_DEFINITION | jq -r '.memory')

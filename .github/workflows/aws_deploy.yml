@@ -30,12 +30,8 @@ jobs:
       - name: Extract version from branch name
         id: extract_version
         run: |
-          echo "GITHUB_REF: $GITHUB_REF"
-          # Extract version from branch name (e.g. refs/heads/release_1.0.0)
           VERSION="${GITHUB_REF#refs/heads/release_}"
-          echo "Version extracted: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "::set-output name=version::$VERSION"
 
       - name: Log in to Amazon ECR
         run: |
@@ -52,70 +48,25 @@ jobs:
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:latest
 
-      - name: Update Staging ECS Service with Secrets
+      - name: Update ECS Service
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          TASK_DEFINITION: GoApiInfraStackGoApiFargateServiceTaskDef1BE268E8
+          CLUSTER: GoApiInfraStack-GoApiClusterD2A0AA60-lZ8voGHK2Stj
+          SERVICE: GoApiInfraStack-GoApiFargateService7D208A3F-diJOgcTrPlCR
+          SECRET_ARN: arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50
         run: |
-          # Retrieve the current staging task definition
-          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition GoApiInfraStackGoApiFargateServiceTaskDef1BE268E8 --query 'taskDefinition' --output json)
-          
-          # Update the image and inject the secret.
-          # The "valueFrom" here uses your secret ARN appended with the JSON key (my_little_secret)
-
-          NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION" | 
-            jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}" \
-               --arg VERSION "${{ env.VERSION }}" '
-                 .containerDefinitions[0].image = $IMAGE
-                 # Add a standard environment variable (not from an ARN)
-                 | .containerDefinitions[0].environment += [
-                   {
-                     "name": "VERSION",
-                     "value": $VERSION
-                   }
-                 ]
-                 # Keep your existing secrets references
-                 | .containerDefinitions[0].secrets = ([
-                   {
-                     "name": "MY_LITTLE_SECRET",
-                     "valueFrom": "arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50:my_little_secret::"
-                   }
-                 ])
-               '
-          )
-                    
-          # Extract CPU and memory values if they exist
-          CPU_VALUE=$(echo $TASK_DEFINITION | jq -r '.cpu')
-          MEMORY_VALUE=$(echo $TASK_DEFINITION | jq -r '.memory')
-          
-          CPU_PARAM=""
-          if [ "$CPU_VALUE" != "null" ]; then
-            CPU_PARAM="--cpu $CPU_VALUE"
-          fi
-          
-          MEMORY_PARAM=""
-          if [ "$MEMORY_VALUE" != "null" ]; then
-            MEMORY_PARAM="--memory $MEMORY_VALUE"
-          fi
-          
-          # Register the new task definition and capture its ARN
-          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --family GoApiInfraStackGoApiFargateServiceTaskDef1BE268E \
-            --container-definitions "$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions')" \
-            $CPU_PARAM $MEMORY_PARAM \
-            --task-role-arn "$(echo $TASK_DEFINITION | jq -r '.taskRoleArn')" \
-            --execution-role-arn "$(echo $TASK_DEFINITION | jq -r '.executionRoleArn')" \
-            --network-mode "$(echo $TASK_DEFINITION | jq -r '.networkMode')" \
-            --query 'taskDefinition.taskDefinitionArn' --output text)
-          
-          # Update the staging ECS service with the new task definition
-          aws ecs update-service --cluster GoApiInfraStack-GoApiClusterD2A0AA60-lZ8voGHK2Stj \
-                                 --service GoApiInfraStack-GoApiFargateService7D208A3F-diJOgcTrPlCR \
-                                 --task-definition $NEW_TASK_DEF_ARN \
-                                 --force-new-deployment
+          chmod +x ./.github/scripts/update_ecs.sh
+          ./.github/scripts/update_ecs.sh
 
   deploy-to-production:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -131,46 +82,14 @@ jobs:
         run: |
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
 
-      - name: Update Production ECS Service with Secrets
+      - name: Update ECS Service
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          TASK_DEFINITION: GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D
+          CLUSTER: GoApiProdInfraStack-GoApiProdClusterEF8B48A5-5wfdJ3sUtyug
+          SERVICE: GoApiProdInfraStack-GoApiProdFargateService66083257-2grSv3vpcGFB
+          SECRET_ARN: arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50
         run: |
-          # Retrieve the current production task definition
-          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D --query 'taskDefinition' --output json)
-          
-          # Update the image and inject the secret.
-          # If production uses a different secret, update the "valueFrom" accordingly.
-          NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}" \
-            '.containerDefinitions[0].image = $IMAGE | .containerDefinitions[0].secrets = ([{
-               "name": "MY_LITTLE_SECRET",
-               "valueFrom": "arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50:my_little_secret::"
-            }])')
-          
-          # Extract CPU and memory values if they exist
-          CPU_VALUE=$(echo $TASK_DEFINITION | jq -r '.cpu')
-          MEMORY_VALUE=$(echo $TASK_DEFINITION | jq -r '.memory')
-          
-          CPU_PARAM=""
-          if [ "$CPU_VALUE" != "null" ]; then
-            CPU_PARAM="--cpu $CPU_VALUE"
-          fi
-          
-          MEMORY_PARAM=""
-          if [ "$MEMORY_VALUE" != "null" ]; then
-            MEMORY_PARAM="--memory $MEMORY_VALUE"
-          fi
-          
-          # Register the new task definition and capture its ARN
-          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --family GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D \
-            --container-definitions "$(echo $NEW_TASK_DEFINITION | jq '.containerDefinitions')" \
-            $CPU_PARAM $MEMORY_PARAM \
-            --task-role-arn "$(echo $TASK_DEFINITION | jq -r '.taskRoleArn')" \
-            --execution-role-arn "$(echo $TASK_DEFINITION | jq -r '.executionRoleArn')" \
-            --network-mode "$(echo $TASK_DEFINITION | jq -r '.networkMode')" \
-            --query 'taskDefinition.taskDefinitionArn' --output text)
-          
-          # Update the production ECS service with the new task definition
-          aws ecs update-service --cluster GoApiProdInfraStack-GoApiProdClusterEF8B48A5-5wfdJ3sUtyug \
-                                 --service GoApiProdInfraStack-GoApiProdFargateService66083257-2grSv3vpcGFB \
-                                 --task-definition $NEW_TASK_DEF_ARN \
-                                 --force-new-deployment
+          chmod +x ./.github/scripts/update_ecs.sh
+          ./.github/scripts/update_ecs.sh
 

@@ -1,9 +1,10 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Health struct {
@@ -13,6 +14,13 @@ type Health struct {
 var version = os.Getenv("VERSION")
 var healthCheckData = Health{Version: version}
 
+// GetHealthCheck godoc
+// @Summary      Health Check
+// @Description  Return service version
+// @Tags         health
+// @Produce      json
+// @Success      200  {object}  Health
+// @Router       /api/health [get]
 func GetHealthCheck(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, healthCheckData)
 }

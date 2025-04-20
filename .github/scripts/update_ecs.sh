@@ -25,6 +25,26 @@ NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUN
         "name": "MY_LITTLE_SECRET",
         "valueFrom": "'"$SECRET_ARN"':my_little_secret::"
       }
+    ])
+    | .containerDefinitions[0].secrets = ([
+      {
+        "name": "AUTH0_DOMAIN",
+        "valueFrom": "'"$SECRET_ARN"':AUTH0_DOMAIN::"
+      },
+      {
+        "name": "AUTH0_CLIENT_ID",
+        "valueFrom": "'"$SECRET_ARN"':AUTH0_CLIENT_ID::"
+      },
+      {
+        "name": "AUTH0_CLIENT_SECRET",
+        "valueFrom": "'"$SECRET_ARN"':AUTH0_CLIENT_SECRET::"
+      }
+    ])
+    | .containerDefinitions[0].secrets += [
+      {
+        "name": "AUTH0_CALLBACK_URL",
+        "valueFrom": "'"$SECRET_ARN"':AUTH0_CALLBACK_URL::"
+      }
     ])')
 
 # Extract CPU and memory values if they exist

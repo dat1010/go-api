@@ -1,0 +1,23 @@
+definitions:
+  controllers.Health:
+    properties:
+      version:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/health:
+    get:
+      description: Return service version
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.Health'
+      summary: Health Check
+      tags:
+      - health
+swagger: "2.0"

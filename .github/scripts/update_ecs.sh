@@ -13,39 +13,18 @@ TASK_DEFINITION_JSON=$(aws ecs describe-task-definition \
 # Update the task definition with the new image and secrets
 NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/go-api:$VERSION" \
   --arg VERSION "$VERSION" \
-  '.containerDefinitions[0].image = $IMAGE 
+  --arg SECRET_ARN "$SECRET_ARN" \
+  '.containerDefinitions[0].image = $IMAGE
   | .containerDefinitions[0].environment += [
-      {
-        "name": "VERSION",
-        "value": $VERSION
-      }
+      { "name": "VERSION", "value": $VERSION }
     ]
-  | .containerDefinitions[0].secrets = ([
-      {
-        "name": "MY_LITTLE_SECRET",
-        "valueFrom": "'"$SECRET_ARN"':my_little_secret::"
-      }
-    ])
-    | .containerDefinitions[0].secrets = ([
-      {
-        "name": "AUTH0_DOMAIN",
-        "valueFrom": "'"$SECRET_ARN"':AUTH0_DOMAIN::"
-      },
-      {
-        "name": "AUTH0_CLIENT_ID",
-        "valueFrom": "'"$SECRET_ARN"':AUTH0_CLIENT_ID::"
-      },
-      {
-        "name": "AUTH0_CLIENT_SECRET",
-        "valueFrom": "'"$SECRET_ARN"':AUTH0_CLIENT_SECRET::"
-      }
-    ])
-    | .containerDefinitions[0].secrets += [
-      {
-        "name": "AUTH0_CALLBACK_URL",
-        "valueFrom": "'"$SECRET_ARN"':AUTH0_CALLBACK_URL::"
-      }
-    ])')
+  | .containerDefinitions[0].secrets = [
+      { "name": "MY_LITTLE_SECRET",   "valueFrom": "\($SECRET_ARN):my_little_secret::" },
+      { "name": "AUTH0_DOMAIN",       "valueFrom": "\($SECRET_ARN):AUTH0_DOMAIN::" },
+      { "name": "AUTH0_CLIENT_ID",    "valueFrom": "\($SECRET_ARN):AUTH0_CLIENT_ID::" },
+      { "name": "AUTH0_CLIENT_SECRET","valueFrom": "\($SECRET_ARN):AUTH0_CLIENT_SECRET::" },
+      { "name": "AUTH0_CALLBACK_URL", "valueFrom": "\($SECRET_ARN):AUTH0_CALLBACK_URL::" }
+    ]')
 
 # Extract CPU and memory values if they exist
 CPU_VALUE=$(echo "$TASK_DEFINITION_JSON" | jq -r '.cpu')

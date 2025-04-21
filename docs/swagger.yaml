@@ -4,6 +4,19 @@ definitions:
       version:
         type: string
     type: object
+  controllers.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      id_token:
+        type: string
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -20,4 +33,40 @@ paths:
       summary: Health Check
       tags:
       - health
+  /auth/callback:
+    get:
+      description: Process the callback from Auth0 after user authentication
+      parameters:
+      - description: Authorization code from Auth0
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Authentication successful
+          schema:
+            $ref: '#/definitions/controllers.TokenResponse'
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+      summary: Handle Auth0 callback
+      tags:
+      - auth
+  /auth/login:
+    get:
+      description: Redirects the user to Auth0 for authentication
+      produces:
+      - application/json
+      responses:
+        "307":
+          description: Redirect to Auth0
+          schema:
+            type: string
+      summary: Redirect to Auth0 login page
+      tags:
+      - auth
 swagger: "2.0"

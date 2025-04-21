@@ -4,7 +4,7 @@
         "contact": {}
     },
     "paths": {
-        "/api/health": {
+        "/api/healthcheck": {
             "get": {
                 "description": "Return service version",
                 "produces": [

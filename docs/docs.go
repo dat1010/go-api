@@ -34,6 +34,61 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/auth/callback": {
+            "get": {
+                "description": "Process the callback from Auth0 after user authentication",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Handle Auth0 callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization code from Auth0",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authentication successful",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.TokenResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "get": {
+                "description": "Redirects the user to Auth0 for authentication",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Redirect to Auth0 login page",
+                "responses": {
+                    "307": {
+                        "description": "Redirect to Auth0",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -41,6 +96,26 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "controllers.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_in": {
+                    "type": "integer"
+                },
+                "id_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "token_type": {
                     "type": "string"
                 }
             }

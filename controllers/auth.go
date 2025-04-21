@@ -17,6 +17,12 @@ type TokenResponse struct {
 	TokenType    string `json:"token_type"`
 }
 
+// @Summary Redirect to Auth0 login page
+// @Description Redirects the user to Auth0 for authentication
+// @Tags auth
+// @Produce json
+// @Success 307 {string} string "Redirect to Auth0"
+// @Router /auth/login [get]
 func Login(c *gin.Context) {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	clientID := os.Getenv("AUTH0_CLIENT_ID")
@@ -34,6 +40,14 @@ func Login(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, authURL)
 }
 
+// @Summary Handle Auth0 callback
+// @Description Process the callback from Auth0 after user authentication
+// @Tags auth
+// @Produce json
+// @Param code query string true "Authorization code from Auth0"
+// @Success 200 {object} controllers.TokenResponse "Authentication successful"
+// @Failure 500 {object} object "Internal server error"
+// @Router /auth/callback [get]
 func Callback(c *gin.Context) {
 	code := c.Query("code")
 	domain := os.Getenv("AUTH0_DOMAIN")

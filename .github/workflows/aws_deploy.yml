@@ -52,8 +52,8 @@ jobs:
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           TASK_DEFINITION: GoApiInfraStackGoApiFargateServiceTaskDef1BE268E8
-          CLUSTER: GoApiInfraStack-GoApiClusterD2A0AA60-lZ8voGHK2Stj
-          SERVICE: GoApiInfraStack-GoApiFargateService7D208A3F-diJOgcTrPlCR
+          CLUSTER: GoApiInfraStack-GoApiClusterD2A0AA60-xTXIdquI0A3P
+          SERVICE: GoApiInfraStack-GoApiFargateService7D208A3F-eo57UwZsRmTg
           SECRET_ARN: arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50
         run: |
           chmod +x ./.github/scripts/update_ecs.sh

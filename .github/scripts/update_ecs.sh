@@ -16,14 +16,21 @@ NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUN
   --arg SECRET_ARN "$SECRET_ARN" \
   '.containerDefinitions[0].image = $IMAGE
   | .containerDefinitions[0].environment += [
-      { "name": "VERSION", "value": $VERSION }
+      { "name": "VERSION", "value": $VERSION },
+      { "name": "USE_HTTPS", "value": "true" }
     ]
   | .containerDefinitions[0].secrets = [
       { "name": "MY_LITTLE_SECRET",   "valueFrom": "\($SECRET_ARN):my_little_secret::" },
       { "name": "AUTH0_DOMAIN",       "valueFrom": "\($SECRET_ARN):AUTH0_DOMAIN::" },
       { "name": "AUTH0_CLIENT_ID",    "valueFrom": "\($SECRET_ARN):AUTH0_CLIENT_ID::" },
       { "name": "AUTH0_CLIENT_SECRET","valueFrom": "\($SECRET_ARN):AUTH0_CLIENT_SECRET::" },
-      { "name": "AUTH0_CALLBACK_URL", "valueFrom": "\($SECRET_ARN):AUTH0_CALLBACK_URL::" }
+      { "name": "AUTH0_CALLBACK_URL", "valueFrom": "\($SECRET_ARN):AUTH0_CALLBACK_URL::" },
+      { "name": "SSL_CERT_PATH",      "valueFrom": "\($SECRET_ARN):SSL_CERT_PATH::" },
+      { "name": "SSL_KEY_PATH",       "valueFrom": "\($SECRET_ARN):SSL_KEY_PATH::" }
+    ]
+  | .containerDefinitions[0].portMappings = [
+      { "containerPort": 443, "hostPort": 443, "protocol": "tcp" },
+      { "containerPort": 80, "hostPort": 80, "protocol": "tcp" }
     ]')
 
 # Extract CPU and memory values if they exist

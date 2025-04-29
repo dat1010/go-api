@@ -28,10 +28,18 @@ NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUN
       { "name": "SSL_CERT_PATH",      "valueFrom": "\($SECRET_ARN):SSL_CERT_PATH::" },
       { "name": "SSL_KEY_PATH",       "valueFrom": "\($SECRET_ARN):SSL_KEY_PATH::" }
     ]
-  | .containerDefinitions[0].portMappings = [
-      { "containerPort": 443, "hostPort": 443, "protocol": "tcp" },
-      { "containerPort": 80, "hostPort": 80, "protocol": "tcp" }
-    ]')
+  | if .containerDefinitions[0].portMappings then
+      .containerDefinitions[0].portMappings += [
+        { "containerPort": 443, "hostPort": 443, "protocol": "tcp" },
+        { "containerPort": 80, "hostPort": 80, "protocol": "tcp" }
+      ]
+    else
+      .containerDefinitions[0].portMappings = [
+        { "containerPort": 8080, "hostPort": 8080, "protocol": "tcp" },
+        { "containerPort": 443, "hostPort": 443, "protocol": "tcp" },
+        { "containerPort": 80, "hostPort": 80, "protocol": "tcp" }
+      ]
+    end')
 
 # Extract CPU and memory values if they exist
 CPU_VALUE=$(echo "$TASK_DEFINITION_JSON" | jq -r '.cpu')

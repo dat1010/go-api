@@ -29,10 +29,17 @@ NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUN
       { "name": "SSL_KEY_PATH",       "valueFrom": "\($SECRET_ARN):SSL_KEY_PATH::" }
     ]
   | if .containerDefinitions[0].portMappings then
-      .containerDefinitions[0].portMappings += [
-        { "containerPort": 443, "hostPort": 443, "protocol": "tcp" },
-        { "containerPort": 80, "hostPort": 80, "protocol": "tcp" }
-      ]
+      # Keep existing port mappings and only add new ones if they don't exist
+      if ([ .containerDefinitions[0].portMappings[] | select(.containerPort == 443) ] | length) == 0 then
+        .containerDefinitions[0].portMappings += [
+          { "containerPort": 443, "hostPort": 443, "protocol": "tcp" }
+        ]
+      else . end |
+      if ([ .containerDefinitions[0].portMappings[] | select(.containerPort == 80) ] | length) == 0 then
+        .containerDefinitions[0].portMappings += [
+          { "containerPort": 80, "hostPort": 80, "protocol": "tcp" }
+        ]
+      else . end
     else
       .containerDefinitions[0].portMappings = [
         { "containerPort": 8080, "hostPort": 8080, "protocol": "tcp" },

@@ -10,6 +10,18 @@ TASK_DEFINITION_JSON=$(aws ecs describe-task-definition \
   --query 'taskDefinition' \
   --output json)
 
+# Debug - see the current task definition structure
+echo "Current Task Definition:"
+echo "$TASK_DEFINITION_JSON" | jq '.containerDefinitions[].name'
+
+# Find the index of the "web" container
+WEB_CONTAINER_INDEX=$(echo "$TASK_DEFINITION_JSON" | jq 'map(.containerDefinitions[].name == "web") | index(true)')
+if [ "$WEB_CONTAINER_INDEX" == "null" ]; then
+  echo "Cannot find 'web' container in task definition. Container names are:"
+  echo "$TASK_DEFINITION_JSON" | jq '.containerDefinitions[].name'
+  exit 1
+fi
+
 # Update the task definition with the new image and secrets
 NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/go-api:$VERSION" \
   --arg VERSION "$VERSION" \
@@ -27,23 +39,34 @@ NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUN
       { "name": "AUTH0_CALLBACK_URL", "valueFrom": "\($SECRET_ARN):AUTH0_CALLBACK_URL::" },
       { "name": "SSL_CERT_PATH",      "valueFrom": "\($SECRET_ARN):SSL_CERT_PATH::" },
       { "name": "SSL_KEY_PATH",       "valueFrom": "\($SECRET_ARN):SSL_KEY_PATH::" }
-    ]
-  | if .containerDefinitions[0].portMappings then
-      # Check for existing ports and add missing ones
-      . as $original |
-      if ([.containerDefinitions[0].portMappings[] | select(.containerPort == 443)] | length) == 0 then
-        .containerDefinitions[0].portMappings += [{"containerPort": 443, "hostPort": 443, "protocol": "tcp"}]
-      else . end |
-      if ([.containerDefinitions[0].portMappings[] | select(.containerPort == 80)] | length) == 0 then
-        .containerDefinitions[0].portMappings += [{"containerPort": 80, "hostPort": 80, "protocol": "tcp"}]
-      else . end
-    else
-      .containerDefinitions[0].portMappings = [
-        {"containerPort": 8080, "hostPort": 8080, "protocol": "tcp"},
-        {"containerPort": 443, "hostPort": 443, "protocol": "tcp"},
-        {"containerPort": 80, "hostPort": 80, "protocol": "tcp"}
-      ]
-    end')
+    ]')
+
+# Ensure port 8080 exists, then add 80 and 443 if they don't exist
+NEW_TASK_DEFINITION=$(echo "$NEW_TASK_DEFINITION" | jq '
+  # Ensure container has portMappings
+  if .containerDefinitions[0].portMappings == null then
+    .containerDefinitions[0].portMappings = []
+  else . end |
+  
+  # Ensure port 8080 exists
+  if ([.containerDefinitions[0].portMappings[] | select(.containerPort == 8080)] | length) == 0 then
+    .containerDefinitions[0].portMappings += [{"containerPort": 8080, "hostPort": 8080, "protocol": "tcp"}]
+  else . end |
+  
+  # Add port 443 if missing
+  if ([.containerDefinitions[0].portMappings[] | select(.containerPort == 443)] | length) == 0 then
+    .containerDefinitions[0].portMappings += [{"containerPort": 443, "hostPort": 443, "protocol": "tcp"}]
+  else . end |
+  
+  # Add port 80 if missing
+  if ([.containerDefinitions[0].portMappings[] | select(.containerPort == 80)] | length) == 0 then
+    .containerDefinitions[0].portMappings += [{"containerPort": 80, "hostPort": 80, "protocol": "tcp"}]
+  else . end
+')
+
+# Debug - see the updated task definition
+echo "Updated port mappings:"
+echo "$NEW_TASK_DEFINITION" | jq '.containerDefinitions[0].portMappings'
 
 # Extract CPU and memory values if they exist
 CPU_VALUE=$(echo "$TASK_DEFINITION_JSON" | jq -r '.cpu')

@@ -20,7 +20,7 @@ RUN mkdir -p /etc/ssl/certs /etc/ssl/private
 # Copy the compiled binary from the build stage
 COPY --from=build /app/main .
 
-# Expose both HTTP and HTTPS ports
+# Expose the port your Gin app listens on
 EXPOSE 8080
 EXPOSE 80
 EXPOSE 443

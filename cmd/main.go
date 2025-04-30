@@ -17,7 +17,20 @@ import (
 )
 
 func main() {
+	// Set Gin to trust all proxies and use the X-Forwarded headers
+	gin.SetTrustedProxies([]string{"0.0.0.0/0"})
+
 	router := gin.Default()
+
+	// Add middleware to force HTTPS in URLs when behind load balancer
+	router.Use(func(c *gin.Context) {
+		// If X-Forwarded-Proto is set to https, update the request to use HTTPS scheme
+		if c.GetHeader("X-Forwarded-Proto") == "https" {
+			c.Request.URL.Scheme = "https"
+			c.Request.Header.Set("X-Forwarded-Proto", "https")
+		}
+		c.Next()
+	})
 
 	api := router.Group("/api")
 	routes.RegisterRoutes(api)
@@ -25,10 +38,10 @@ func main() {
 	// serve Swagger UI
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Get the HTTP bind address
+	// Get the HTTP bind address - keep it on 8080 since the ALB will forward to this port
 	bindAddr := os.Getenv("BIND_ADDR")
 	if bindAddr == "" {
-		bindAddr = "0.0.0.0:80"
+		bindAddr = "0.0.0.0:8080"
 	}
 
 	// Create a context for graceful shutdown

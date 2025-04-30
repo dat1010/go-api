@@ -33,18 +33,17 @@ NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUN
       { "name": "SSL_KEY_PATH",       "valueFrom": "\($SECRET_ARN):SSL_KEY_PATH::" }
     ]')
 
-# Create a simpler port mapping update that ensures 8080 exists and adds 80 and 443
+# Add port 8080 separately, ensuring we don't duplicate
+echo "Adding port 8080 if it doesn't exist"
 NEW_TASK_DEFINITION=$(echo "$NEW_TASK_DEFINITION" | jq '
-  .containerDefinitions[0].portMappings = 
-    (if .containerDefinitions[0].portMappings then .containerDefinitions[0].portMappings else [] end) +
-    # Ensure these ports exist
-    [
-      {"containerPort": 8080, "hostPort": 8080, "protocol": "tcp"},
-      {"containerPort": 443, "hostPort": 443, "protocol": "tcp"},
-      {"containerPort": 80, "hostPort": 80, "protocol": "tcp"}
-    ] | 
-    # Remove duplicates by selecting unique containerPort values
-    unique_by(.containerPort)
+  # First check if port 8080 is missing
+  if (.containerDefinitions[0].portMappings | map(select(.containerPort == 8080)) | length) == 0 then
+    # Port 8080 is missing, so add it
+    .containerDefinitions[0].portMappings += [{"containerPort": 8080, "hostPort": 8080, "protocol": "tcp"}]
+  else
+    # Port 8080 already exists
+    .
+  end
 ')
 
 # Debug - print updated port mappings

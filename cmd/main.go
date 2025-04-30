@@ -28,7 +28,7 @@ func main() {
 	// Get the HTTP bind address
 	bindAddr := os.Getenv("BIND_ADDR")
 	if bindAddr == "" {
-		bindAddr = "0.0.0.0:8080"
+		bindAddr = "0.0.0.0:80"
 	}
 
 	// Create a context for graceful shutdown

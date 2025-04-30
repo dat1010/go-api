@@ -13,9 +13,17 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -o main ./cmd/
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
+
+# Create directory for SSL certificates
+RUN mkdir -p /etc/ssl/certs /etc/ssl/private
+
 # Copy the compiled binary from the build stage
 COPY --from=build /app/main .
-# Expose the port your Gin app listens on (e.g., 8080)
+
+# Expose both HTTP and HTTPS ports
 EXPOSE 8080
+EXPOSE 80
+EXPOSE 443
+
 # Start the application
 CMD ["./main"]

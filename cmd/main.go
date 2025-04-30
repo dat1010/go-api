@@ -17,17 +17,19 @@ import (
 )
 
 func main() {
-	// Set Gin to trust all proxies and use the X-Forwarded headers
-	gin.SetTrustedProxies([]string{"0.0.0.0/0"})
-
 	router := gin.Default()
+
+	// Trust all proxies (for older Gin versions)
+	router.SetTrustedProxies(nil) // For older versions this is a no-op
+	// Use engine-level configuration for older versions
+	router.ForwardedByClientIP = true
+	router.AppEngine = false
 
 	// Add middleware to force HTTPS in URLs when behind load balancer
 	router.Use(func(c *gin.Context) {
 		// If X-Forwarded-Proto is set to https, update the request to use HTTPS scheme
 		if c.GetHeader("X-Forwarded-Proto") == "https" {
 			c.Request.URL.Scheme = "https"
-			c.Request.Header.Set("X-Forwarded-Proto", "https")
 		}
 		c.Next()
 	})

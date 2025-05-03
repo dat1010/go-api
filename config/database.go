@@ -10,11 +10,11 @@ import (
 )
 
 func NewDB() (*sqlx.DB, error) {
-	dbURL := os.Getenv("TURSO_DB_URL")
-	dbToken := os.Getenv("TURSO_DB_TOKEN")
+	dbURL := os.Getenv("TURSO_DATABASE_URL")
+	dbToken := os.Getenv("TURSO_AUTH_TOKEN")
 
 	if dbURL == "" || dbToken == "" {
-		return nil, fmt.Errorf("TURSO_DB_URL and TURSO_DB_TOKEN must be set")
+		return nil, fmt.Errorf("TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be set")
 	}
 
 	// Add auth token to the URL

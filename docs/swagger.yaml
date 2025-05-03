@@ -1,7 +1,38 @@
 definitions:
+  controllers.CreatePostRequest:
+    properties:
+      content:
+        type: string
+      published:
+        type: boolean
+      title:
+        type: string
+    required:
+    - content
+    - title
+    type: object
   controllers.Health:
     properties:
       version:
+        type: string
+    type: object
+  controllers.Post:
+    properties:
+      auth0_user_id:
+        type: string
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      published:
+        type: boolean
+      slug:
+        type: string
+      title:
+        type: string
+      updated_at:
         type: string
     type: object
   controllers.TokenResponse:
@@ -15,6 +46,15 @@ definitions:
       refresh_token:
         type: string
       token_type:
+        type: string
+    type: object
+  controllers.UpdatePostRequest:
+    properties:
+      content:
+        type: string
+      published:
+        type: boolean
+      title:
         type: string
     type: object
 info:
@@ -69,4 +109,176 @@ paths:
       summary: Redirect to Auth0 login page
       tags:
       - auth
+  /posts:
+    get:
+      description: Get a list of posts with optional filtering
+      parameters:
+      - description: Filter by published status
+        in: query
+        name: published
+        type: boolean
+      - description: Filter by author ID
+        in: query
+        name: author
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.Post'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+      summary: List posts
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      description: Create a new post with the provided data
+      parameters:
+      - description: Post data
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CreatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.Post'
+        "400":
+          description: Invalid request
+          schema:
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+      security:
+      - Bearer: []
+      summary: Create a new post
+      tags:
+      - posts
+  /posts/{id}:
+    delete:
+      description: Delete a post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            type: object
+        "404":
+          description: Post not found
+          schema:
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+      security:
+      - Bearer: []
+      summary: Delete a post
+      tags:
+      - posts
+    get:
+      description: Get a post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.Post'
+        "404":
+          description: Post not found
+          schema:
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+      summary: Get a post by ID
+      tags:
+      - posts
+    put:
+      consumes:
+      - application/json
+      description: Update an existing post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Post data
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.UpdatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.Post'
+        "400":
+          description: Invalid request
+          schema:
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            type: object
+        "404":
+          description: Post not found
+          schema:
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+      security:
+      - Bearer: []
+      summary: Update a post
+      tags:
+      - posts
 swagger: "2.0"

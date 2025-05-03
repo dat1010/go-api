@@ -22,7 +22,7 @@ type TokenResponse struct {
 // @Tags auth
 // @Produce json
 // @Success 307 {string} string "Redirect to Auth0"
-// @Router /auth/login [get]
+// @Router /api/login [get]
 func Login(c *gin.Context) {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	clientID := os.Getenv("AUTH0_CLIENT_ID")
@@ -47,7 +47,7 @@ func Login(c *gin.Context) {
 // @Param code query string true "Authorization code from Auth0"
 // @Success 200 {object} controllers.TokenResponse "Authentication successful"
 // @Failure 500 {object} object "Internal server error"
-// @Router /auth/callback [get]
+// @Router /api/callback [get]
 func Callback(c *gin.Context) {
 	code := c.Query("code")
 	domain := os.Getenv("AUTH0_DOMAIN")
@@ -92,7 +92,7 @@ func Callback(c *gin.Context) {
 // @Tags auth
 // @Produce json
 // @Success 307 {string} string "Redirect to Auth0 logout"
-// @Router /auth/logout [get]
+// @Router /api/logout [get]
 func Logout(c *gin.Context) {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	clientID := os.Getenv("AUTH0_CLIENT_ID")

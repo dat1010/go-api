@@ -8,12 +8,9 @@ import (
 // RegisterRoutes registers all the API routes
 func RegisterRoutes(api *gin.RouterGroup) {
 	// Auth routes
-	auth := api.Group("/auth")
-	{
-		auth.GET("/login", controllers.Login)
-		auth.GET("/callback", controllers.Callback)
-		auth.GET("/logout", controllers.Logout)
-	}
+	api.GET("/login", controllers.Login)
+	api.GET("/callback", controllers.Callback)
+	api.GET("/logout", controllers.Logout)
 
 	// Other routes...
 	api.GET("/healthcheck", controllers.GetHealthCheck)

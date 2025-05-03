@@ -60,20 +60,7 @@ definitions:
 info:
   contact: {}
 paths:
-  /api/healthcheck:
-    get:
-      description: Return service version
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/controllers.Health'
-      summary: Health Check
-      tags:
-      - health
-  /auth/callback:
+  /api/callback:
     get:
       description: Process the callback from Auth0 after user authentication
       parameters:
@@ -96,7 +83,20 @@ paths:
       summary: Handle Auth0 callback
       tags:
       - auth
-  /auth/login:
+  /api/healthcheck:
+    get:
+      description: Return service version
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.Health'
+      summary: Health Check
+      tags:
+      - health
+  /api/login:
     get:
       description: Redirects the user to Auth0 for authentication
       produces:
@@ -109,7 +109,7 @@ paths:
       summary: Redirect to Auth0 login page
       tags:
       - auth
-  /auth/logout:
+  /api/logout:
     get:
       description: Logs out the user by clearing the session cookie and redirecting
         to Auth0 logout

@@ -15,27 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/healthcheck": {
-            "get": {
-                "description": "Return service version",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Health Check",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.Health"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/callback": {
+        "/api/callback": {
             "get": {
                 "description": "Process the callback from Auth0 after user authentication",
                 "produces": [
@@ -70,7 +50,27 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/login": {
+        "/api/healthcheck": {
+            "get": {
+                "description": "Return service version",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health Check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.Health"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/login": {
             "get": {
                 "description": "Redirects the user to Auth0 for authentication",
                 "produces": [
@@ -90,7 +90,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/logout": {
+        "/api/logout": {
             "get": {
                 "description": "Logs out the user by clearing the session cookie and redirecting to Auth0 logout",
                 "produces": [

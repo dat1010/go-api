@@ -81,8 +81,7 @@ func Callback(c *gin.Context) {
 	// Secure, HttpOnly, and SameSite options are recommended for production
 	c.SetCookie(
 		"id_token", tr.IDToken,
-		tr.ExpiresIn, "/", "nofeed.zone", true, true,
-	)
+		tr.ExpiresIn, "/", "nofeed.zone", true, false)
 
 	// Redirect to frontend
 	c.Redirect(http.StatusTemporaryRedirect, "https://nofeed.zone")

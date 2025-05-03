@@ -109,6 +109,20 @@ paths:
       summary: Redirect to Auth0 login page
       tags:
       - auth
+  /auth/logout:
+    get:
+      description: Logs out the user by clearing the session cookie and redirecting
+        to Auth0 logout
+      produces:
+      - application/json
+      responses:
+        "307":
+          description: Redirect to Auth0 logout
+          schema:
+            type: string
+      summary: Logout user
+      tags:
+      - auth
   /posts:
     get:
       description: Get a list of posts with optional filtering

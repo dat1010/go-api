@@ -3,13 +3,10 @@ package routes
 import (
 	"github.com/dat1010/go-api/controllers"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // RegisterRoutes registers all the API routes
-func RegisterRoutes(api *gin.RouterGroup, db *gorm.DB) {
-	// Pass the database connection to controllers that need it
-
+func RegisterRoutes(api *gin.RouterGroup) {
 	// Auth routes
 	auth := api.Group("/auth")
 	{

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -10,56 +9,21 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dat1010/go-api/config"
 	_ "github.com/dat1010/go-api/docs"
 	"github.com/dat1010/go-api/routes"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 func main() {
-	// Initialize Turso database connection
-	dbURL := os.Getenv("TURSO_DATABASE_URL")
-	authToken := os.Getenv("TURSO_AUTH_TOKEN")
-	if dbURL == "" || authToken == "" {
-		log.Fatal("TURSO_DATABASE_URL and TURSO_AUTH_TOKEN environment variables must be set")
-	}
-
-	connectionURL := fmt.Sprintf("%s?authToken=%s", dbURL, authToken)
-	
-	// Configure GORM logger
-	gormLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold:             time.Second,
-			LogLevel:                  logger.Info,
-			IgnoreRecordNotFoundError: true,
-			Colorful:                  true,
-		},
-	)
-
-	// Initialize GORM with SQLite driver
-	db, err := gorm.Open(sqlite.Open(connectionURL), &gorm.Config{
-		Logger: gormLogger,
-	})
+	// Initialize database connection
+	db, err := config.NewDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	// Test the connection
-	sqlDB, err := db.DB()
-	if err != nil {
-		log.Fatalf("Failed to get database instance: %v", err)
-	}
-	defer sqlDB.Close()
-
-	if err := sqlDB.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
-	}
-	log.Println("Successfully connected to Turso database with GORM")
+	defer db.Close()
 
 	router := gin.Default()
 
@@ -76,9 +40,16 @@ func main() {
 		c.Next()
 	})
 
-	// Make db available to routes
+	// Make db available to all routes
+	router.Use(func(c *gin.Context) {
+		c.Set("db", db)
+		c.Next()
+	})
+
+	// Register routes
 	api := router.Group("/api")
-	routes.RegisterRoutes(api, db)
+	routes.RegisterRoutes(api)
+	routes.RegisterPostRoutes(api)
 
 	// serve Swagger UI
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -99,26 +70,25 @@ func main() {
 		Handler: router,
 	}
 
-	// Run HTTP server
-	log.Printf("Starting HTTP server on %s", bindAddr)
+	// Start the server in a goroutine
 	go func() {
+		log.Printf("Server starting on %s", bindAddr)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start HTTP server: %v", err)
+			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 
 	// Wait for interrupt signal
 	<-ctx.Done()
-	log.Println("Shutting down server...")
 
-	// Create a timeout context for shutdown
+	// Create a shutdown context with timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Shutdown the server
+	// Attempt graceful shutdown
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
-		log.Printf("HTTP server forced to shutdown: %v", err)
+		log.Printf("Server forced to shutdown: %v", err)
 	}
 
-	log.Println("Server gracefully stopped")
+	log.Println("Server exiting")
 }

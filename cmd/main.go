@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,7 +15,9 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/tursodatabase/libsql-client-go/libsql"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func main() {
@@ -28,29 +29,47 @@ func main() {
 	}
 
 	connectionURL := fmt.Sprintf("%s?authToken=%s", dbURL, authToken)
-	db, err := sql.Open("libsql", connectionURL)
+	
+	// Configure GORM logger
+	gormLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  true,
+		},
+	)
+
+	// Initialize GORM with SQLite driver
+	db, err := gorm.Open(sqlite.Open(connectionURL), &gorm.Config{
+		Logger: gormLogger,
+	})
 	if err != nil {
-		log.Fatalf("Failed to open database connection: %v", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
 
 	// Test the connection
-	if err := db.Ping(); err != nil {
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("Failed to get database instance: %v", err)
+	}
+	defer sqlDB.Close()
+
+	if err := sqlDB.Ping(); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
-	log.Println("Successfully connected to Turso database")
+	log.Println("Successfully connected to Turso database with GORM")
 
 	router := gin.Default()
 
 	// Trust all proxies (for older Gin versions)
-	router.SetTrustedProxies(nil) // For older versions this is a no-op
-	// Use engine-level configuration for older versions
+	router.SetTrustedProxies(nil)
 	router.ForwardedByClientIP = true
 	router.AppEngine = false
 
 	// Add middleware to force HTTPS in URLs when behind load balancer
 	router.Use(func(c *gin.Context) {
-		// If X-Forwarded-Proto is set to https, update the request to use HTTPS scheme
 		if c.GetHeader("X-Forwarded-Proto") == "https" {
 			c.Request.URL.Scheme = "https"
 		}
@@ -64,7 +83,7 @@ func main() {
 	// serve Swagger UI
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Get the HTTP bind address - keep it on 8080 since the ALB will forward to this port
+	// Get the HTTP bind address
 	bindAddr := os.Getenv("BIND_ADDR")
 	if bindAddr == "" {
 		bindAddr = "0.0.0.0:8080"
@@ -80,7 +99,7 @@ func main() {
 		Handler: router,
 	}
 
-	// Run HTTP server - no need for HTTPS as AWS ALB handles SSL termination
+	// Run HTTP server
 	log.Printf("Starting HTTP server on %s", bindAddr)
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {

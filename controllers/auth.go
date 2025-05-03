@@ -76,5 +76,14 @@ func Callback(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, tr)
+
+	// Set a cookie with the ID token (or access token, as needed)
+	// Secure, HttpOnly, and SameSite options are recommended for production
+	c.SetCookie(
+		"id_token", tr.IDToken,
+		tr.ExpiresIn, "/", "nofeed.zone", true, true,
+	)
+
+	// Redirect to frontend
+	c.Redirect(http.StatusTemporaryRedirect, "https://nofeed.zone")
 }

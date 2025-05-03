@@ -79,6 +79,26 @@
                 }
             }
         },
+        "/auth/logout": {
+            "get": {
+                "description": "Logs out the user by clearing the session cookie and redirecting to Auth0 logout",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout user",
+                "responses": {
+                    "307": {
+                        "description": "Redirect to Auth0 logout",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/posts": {
             "get": {
                 "description": "Get a list of posts with optional filtering",

@@ -86,3 +86,27 @@ func Callback(c *gin.Context) {
 	// Redirect to frontend
 	c.Redirect(http.StatusTemporaryRedirect, "https://nofeed.zone")
 }
+
+// @Summary Logout user
+// @Description Logs out the user by clearing the session cookie and redirecting to Auth0 logout
+// @Tags auth
+// @Produce json
+// @Success 307 {string} string "Redirect to Auth0 logout"
+// @Router /auth/logout [get]
+func Logout(c *gin.Context) {
+	domain := os.Getenv("AUTH0_DOMAIN")
+	clientID := os.Getenv("AUTH0_CLIENT_ID")
+	returnTo := os.Getenv("AUTH0_LOGOUT_RETURN_URL")
+
+	// Clear the authentication cookie
+	c.SetCookie(
+		"id_token", "",
+		-1, "/", "nofeed.zone", true, false)
+
+	// Construct the Auth0 logout URL
+	logoutURL := "https://" + domain + "/v2/logout" +
+		"?client_id=" + clientID +
+		"&returnTo=" + returnTo
+
+	c.Redirect(http.StatusTemporaryRedirect, logoutURL)
+}

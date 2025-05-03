@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -14,9 +16,30 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
 func main() {
+	// Initialize Turso database connection
+	dbURL := os.Getenv("TURSO_DATABASE_URL")
+	authToken := os.Getenv("TURSO_AUTH_TOKEN")
+	if dbURL == "" || authToken == "" {
+		log.Fatal("TURSO_DATABASE_URL and TURSO_AUTH_TOKEN environment variables must be set")
+	}
+
+	connectionURL := fmt.Sprintf("%s?authToken=%s", dbURL, authToken)
+	db, err := sql.Open("libsql", connectionURL)
+	if err != nil {
+		log.Fatalf("Failed to open database connection: %v", err)
+	}
+	defer db.Close()
+
+	// Test the connection
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
+	log.Println("Successfully connected to Turso database")
+
 	router := gin.Default()
 
 	// Trust all proxies (for older Gin versions)
@@ -34,8 +57,9 @@ func main() {
 		c.Next()
 	})
 
+	// Make db available to routes
 	api := router.Group("/api")
-	routes.RegisterRoutes(api)
+	routes.RegisterRoutes(api, db)
 
 	// serve Swagger UI
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

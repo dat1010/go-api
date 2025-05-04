@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware/v2"
+	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/gin-gonic/gin"
 )
@@ -39,12 +41,16 @@ func Auth0() gin.HandlerFunc {
 		panic("AUTH0_AUDIENCE environment variable not set")
 	}
 
+	// Set up the key provider
+	provider := jwks.NewCachingProvider(
+		context.Background(),
+		"https://"+domain+"/.well-known/jwks.json",
+		5*time.Minute,
+	)
+
 	// Set up the validator
 	jwtValidator, err := validator.New(
-		func(ctx context.Context) (interface{}, error) {
-			log.Printf("Getting key provider")
-			return nil, nil // For RS256, we don't need a key provider
-		},
+		provider.KeyFunc,
 		validator.RS256,
 		"https://"+domain+"/",
 		[]string{audience},

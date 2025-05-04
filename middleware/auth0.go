@@ -64,20 +64,26 @@ func Auth0() gin.HandlerFunc {
 		req.Header.Set("Authorization", authHeader)
 
 		// Validate the token
-		encounteredError := false
+		var validationError error
 		var handler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 			c.Request = r
+			validationError = nil
 		}
 
 		middleware.CheckJWT(handler).ServeHTTP(c.Writer, req)
 
-		if encounteredError {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		if validationError != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: " + validationError.Error()})
 			return
 		}
 
 		// Get the claims from the token
-		token := c.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
+		token, ok := c.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
+			return
+		}
+
 		c.Set("user", token.RegisteredClaims)
 		c.Next()
 	}

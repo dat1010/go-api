@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type Post struct {
@@ -60,7 +61,11 @@ func CreatePost(c *gin.Context) {
 	}
 
 	// Extract user ID from claims
-	userID := claims.(map[string]interface{})["sub"].(string)
+	registeredClaims, ok := claims.(*jwt.RegisteredClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
+		return
+	}
 
 	// Generate a unique slug from the title
 	slug := generateSlug(req.Title)
@@ -69,7 +74,7 @@ func CreatePost(c *gin.Context) {
 		ID:          uuid.New().String(),
 		Title:       req.Title,
 		Content:     req.Content,
-		Auth0UserID: userID,
+		Auth0UserID: registeredClaims.Subject,
 		Published:   req.Published,
 		Slug:        slug,
 		CreatedAt:   time.Now(),

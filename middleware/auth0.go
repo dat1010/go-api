@@ -31,11 +31,14 @@ func Auth0() gin.HandlerFunc {
 	// Set up the validator
 	jwtValidator, err := validator.New(
 		func(ctx context.Context) (interface{}, error) {
-			return validator.NewKeyProvider("https://"+domain+"/.well-known/jwks.json")
+			return nil, nil // For RS256, we don't need a key provider
 		},
 		validator.RS256,
 		"https://"+domain+"/",
 		[]string{os.Getenv("AUTH0_AUDIENCE")},
+		validator.WithCustomClaims(func() validator.CustomClaims {
+			return &CustomClaims{}
+		}),
 	)
 	if err != nil {
 		panic(err)

@@ -61,17 +61,12 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	log.Printf("Claims type: %T", claims)
-	log.Printf("Claims value: %+v", claims)
-
 	// Extract user ID from claims
 	registeredClaims, ok := claims.(validator.RegisteredClaims)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
 		return
 	}
-
-	log.Printf("RegisteredClaims: %+v", registeredClaims)
 
 	// Generate a unique slug from the title
 	slug := generateSlug(req.Title)

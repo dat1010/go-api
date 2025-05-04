@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 	"time"
 

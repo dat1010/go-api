@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type Post struct {
@@ -61,7 +61,7 @@ func CreatePost(c *gin.Context) {
 	}
 
 	// Extract user ID from claims
-	registeredClaims, ok := claims.(*jwt.RegisteredClaims)
+	validatedClaims, ok := claims.(*validator.ValidatedClaims)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
 		return
@@ -74,7 +74,7 @@ func CreatePost(c *gin.Context) {
 		ID:          uuid.New().String(),
 		Title:       req.Title,
 		Content:     req.Content,
-		Auth0UserID: registeredClaims.Subject,
+		Auth0UserID: validatedClaims.RegisteredClaims.Subject,
 		Published:   req.Published,
 		Slug:        slug,
 		CreatedAt:   time.Now(),

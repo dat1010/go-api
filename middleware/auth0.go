@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -42,9 +43,13 @@ func Auth0() gin.HandlerFunc {
 	}
 
 	// Set up the key provider
+	issuerURL, err := url.Parse("https://" + domain + "/")
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse issuer URL: %v", err))
+	}
+
 	provider := jwks.NewCachingProvider(
-		context.Background(),
-		"https://"+domain+"/.well-known/jwks.json",
+		issuerURL,
 		5*time.Minute,
 	)
 

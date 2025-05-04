@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -33,6 +34,8 @@ func Auth0() gin.HandlerFunc {
 	if audience == "" {
 		panic("AUTH0_AUDIENCE environment variable not set")
 	}
+
+	log.Printf("Setting up Auth0 middleware with domain: %s and audience: %s", domain, audience)
 
 	// Set up the validator
 	jwtValidator, err := validator.New(
@@ -65,6 +68,9 @@ func Auth0() gin.HandlerFunc {
 			return
 		}
 
+		token := parts[1]
+		log.Printf("Received token: %s", token)
+
 		// Create a new request with the token
 		req := c.Request.Clone(c.Request.Context())
 		req.Header.Set("Authorization", authHeader)
@@ -79,6 +85,7 @@ func Auth0() gin.HandlerFunc {
 		middleware.CheckJWT(handler).ServeHTTP(c.Writer, req)
 
 		if validationError != nil {
+			log.Printf("Token validation error: %v", validationError)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Invalid token",
 				"details": validationError.Error(),
@@ -87,8 +94,9 @@ func Auth0() gin.HandlerFunc {
 		}
 
 		// Get the claims from the token
-		token, ok := c.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
+		claims, ok := c.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
 		if !ok {
+			log.Printf("Failed to extract claims from token")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Invalid token format",
 				"details": "Could not extract claims from token",
@@ -96,7 +104,8 @@ func Auth0() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user", token.RegisteredClaims)
+		log.Printf("Token validated successfully. Claims: %+v", claims)
+		c.Set("user", claims.RegisteredClaims)
 		c.Next()
 	}
 }

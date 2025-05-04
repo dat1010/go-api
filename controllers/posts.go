@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"time"
 
@@ -60,12 +61,17 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
+	log.Printf("Claims type: %T", claims)
+	log.Printf("Claims value: %+v", claims)
+
 	// Extract user ID from claims
-	validatedClaims, ok := claims.(*validator.ValidatedClaims)
+	registeredClaims, ok := claims.(validator.RegisteredClaims)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
 		return
 	}
+
+	log.Printf("RegisteredClaims: %+v", registeredClaims)
 
 	// Generate a unique slug from the title
 	slug := generateSlug(req.Title)
@@ -74,7 +80,7 @@ func CreatePost(c *gin.Context) {
 		ID:          uuid.New().String(),
 		Title:       req.Title,
 		Content:     req.Content,
-		Auth0UserID: validatedClaims.RegisteredClaims.Subject,
+		Auth0UserID: registeredClaims.Subject,
 		Published:   req.Published,
 		Slug:        slug,
 		CreatedAt:   time.Now(),

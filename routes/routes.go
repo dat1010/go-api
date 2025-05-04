@@ -13,16 +13,16 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	api.GET("/callback", controllers.Callback)
 	api.GET("/logout", controllers.Logout)
 
-	// Other routes...
+	// Public routes
 	api.GET("/healthcheck", controllers.GetHealthCheck)
 	api.GET("/secrets", controllers.GetSecret)
-
 	api.GET("", controllers.ListPosts)
 	api.GET("/:id", controllers.GetPost)
 
 	// Protected routes
-	api.Use(middleware.Auth0())
-	api.POST("", controllers.CreatePost)
-	api.PUT("/:id", controllers.UpdatePost)
-	api.DELETE("/:id", controllers.DeletePost)
+	protected := api.Group("")
+	protected.Use(middleware.Auth0())
+	protected.POST("", controllers.CreatePost)
+	protected.PUT("/:id", controllers.UpdatePost)
+	protected.DELETE("/:id", controllers.DeletePost)
 }

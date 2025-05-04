@@ -11,6 +11,7 @@ import (
 
 	"github.com/dat1010/go-api/config"
 	_ "github.com/dat1010/go-api/docs"
+	"github.com/dat1010/go-api/middleware"
 	"github.com/dat1010/go-api/routes"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -26,6 +27,9 @@ func main() {
 	defer db.Close()
 
 	router := gin.Default()
+
+	// Add CORS middleware
+	router.Use(middleware.CORS())
 
 	// Trust all proxies (for older Gin versions)
 	router.SetTrustedProxies(nil)

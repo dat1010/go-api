@@ -31,9 +31,9 @@ func Auth0() gin.HandlerFunc {
 	// Set up the validator
 	jwtValidator, err := validator.New(
 		func(ctx context.Context) (interface{}, error) {
-			return []byte(os.Getenv("AUTH0_CLIENT_SECRET")), nil
+			return validator.NewKeyProvider("https://"+domain+"/.well-known/jwks.json")
 		},
-		validator.HS256,
+		validator.RS256,
 		"https://"+domain+"/",
 		[]string{os.Getenv("AUTH0_AUDIENCE")},
 	)

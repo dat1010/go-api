@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -24,8 +25,13 @@ func (c CustomClaims) Validate(ctx context.Context) error {
 
 func Auth0() gin.HandlerFunc {
 	domain := os.Getenv("AUTH0_DOMAIN")
+	audience := os.Getenv("AUTH0_AUDIENCE")
+	
 	if domain == "" {
 		panic("AUTH0_DOMAIN environment variable not set")
+	}
+	if audience == "" {
+		panic("AUTH0_AUDIENCE environment variable not set")
 	}
 
 	// Set up the validator
@@ -35,13 +41,13 @@ func Auth0() gin.HandlerFunc {
 		},
 		validator.RS256,
 		"https://"+domain+"/",
-		[]string{os.Getenv("AUTH0_AUDIENCE")},
+		[]string{audience},
 		validator.WithCustomClaims(func() validator.CustomClaims {
 			return &CustomClaims{}
 		}),
 	)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Failed to set up the validator: %v", err))
 	}
 
 	middleware := jwtmiddleware.New(jwtValidator.ValidateToken)
@@ -73,14 +79,20 @@ func Auth0() gin.HandlerFunc {
 		middleware.CheckJWT(handler).ServeHTTP(c.Writer, req)
 
 		if validationError != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: " + validationError.Error()})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid token",
+				"details": validationError.Error(),
+			})
 			return
 		}
 
 		// Get the claims from the token
 		token, ok := c.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid token format",
+				"details": "Could not extract claims from token",
+			})
 			return
 		}
 

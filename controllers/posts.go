@@ -90,7 +90,7 @@ func CreatePost(c *gin.Context) {
 }
 
 // @Summary Get a post by ID
-// @Description Get a post by its ID
+// @Description Get a post by its ID. This is a public endpoint and does not require authentication.
 // @Tags posts
 // @Produce json
 // @Param id path string true "Post ID"
@@ -251,7 +251,7 @@ func DeletePost(c *gin.Context) {
 }
 
 // @Summary List posts
-// @Description Get a list of posts with optional filtering
+// @Description Get a list of posts with optional filtering. This is a public endpoint and does not require authentication.
 // @Tags posts
 // @Produce json
 // @Param published query bool false "Filter by published status"

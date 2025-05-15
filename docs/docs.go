@@ -112,7 +112,7 @@ const docTemplate = `{
         },
         "/posts": {
             "get": {
-                "description": "Get a list of posts with optional filtering",
+                "description": "Get a list of posts with optional filtering. This is a public endpoint and does not require authentication.",
                 "produces": [
                     "application/json"
                 ],
@@ -210,7 +210,7 @@ const docTemplate = `{
         },
         "/posts/{id}": {
             "get": {
-                "description": "Get a post by its ID",
+                "description": "Get a post by its ID. This is a public endpoint and does not require authentication.",
                 "produces": [
                     "application/json"
                 ],

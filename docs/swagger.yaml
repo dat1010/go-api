@@ -125,7 +125,8 @@ paths:
       - auth
   /posts:
     get:
-      description: Get a list of posts with optional filtering
+      description: Get a list of posts with optional filtering. This is a public endpoint
+        and does not require authentication.
       parameters:
       - description: Filter by published status
         in: query
@@ -222,7 +223,8 @@ paths:
       tags:
       - posts
     get:
-      description: Get a post by its ID
+      description: Get a post by its ID. This is a public endpoint and does not require
+        authentication.
       parameters:
       - description: Post ID
         in: path

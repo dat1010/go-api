@@ -38,3 +38,9 @@ This will generate the `docs/` folder for your Swagger UI.
 ```
 go run github.com/swaggo/swag/cmd/swag@latest init --generalInfo cmd/main.go --output docs
 ```
+
+or run 
+
+```
+go generate ./cmd
+```

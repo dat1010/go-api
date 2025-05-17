@@ -18,7 +18,7 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	api.GET("/secrets", controllers.GetSecret)
 	api.GET("", controllers.ListPosts)
 	api.GET("/:id", controllers.GetPost)
-	api.POST("", controllers.CreateEvent)
+	api.POST("/events", controllers.CreateEvent)
 
 	// Protected routes
 	protected := api.Group("")

@@ -19,6 +19,25 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title           Go API
+// @version         1.0
+// @description     A simple API written in Golang with AWS EventBridge integration
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      api.nofeed.zone
+// @BasePath  /api
+
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 func main() {
 	// Initialize database connection
 	db, err := config.NewDB()
@@ -56,8 +75,9 @@ func main() {
 	routes.RegisterRoutes(api)
 	routes.RegisterPostRoutes(api)
 
-	// serve Swagger UI
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// serve Swagger UI with custom configuration
+	swaggerHandler := ginSwagger.DisablingWrapHandler(swaggerFiles.Handler, "DISABLE_SWAGGER_HTTP_HANDLER")
+	router.GET("/swagger/*any", swaggerHandler)
 
 	// Get the HTTP bind address
 	bindAddr := os.Getenv("BIND_ADDR")

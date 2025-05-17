@@ -15,29 +15,31 @@ import (
 
 // CreateEventRequest represents the structure for creating a new event
 type CreateEventRequest struct {
-	Name        string            `json:"name" binding:"required"`
-	Description string            `json:"description"`
-	Schedule    string            `json:"schedule" binding:"required"` // cron expression
-	Payload     map[string]string `json:"payload"`
+	Name        string            `json:"name" binding:"required" example:"my-scheduled-event"`
+	Description string            `json:"description" example:"A scheduled event that runs daily"`
+	Schedule    string            `json:"schedule" binding:"required" example:"0 12 * * ? *"` // cron expression
+	Payload     map[string]string `json:"payload" example:"{\"key\":\"value\"}"`
 }
 
 // Event represents the response structure
 type Event struct {
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Schedule    string            `json:"schedule"`
-	Payload     map[string]string `json:"payload"`
-	CreatedAt   time.Time         `json:"created_at"`
+	Name        string            `json:"name" example:"my-scheduled-event"`
+	Description string            `json:"description" example:"A scheduled event that runs daily"`
+	Schedule    string            `json:"schedule" example:"0 12 * * ? *"`
+	Payload     map[string]string `json:"payload" example:"{\"key\":\"value\"}"`
+	CreatedAt   time.Time         `json:"created_at" example:"2024-03-20T12:00:00Z"`
 }
 
-// @Summary Create a new event
-// @Description Create a eventbridge the provided data
+// @Summary Create a new scheduled event
+// @Description Create an AWS EventBridge rule with the provided schedule and payload
+// @Tags events
 // @Accept json
 // @Produce json
-// @Param post body controllers.CreateEventRequest true "Event data"
-// @Success 201 {object} controllers.Event
+// @Param event body controllers.CreateEventRequest true "Event data"
+// @Success 201 {object} controllers.Event "Event created successfully"
+// @Failure 400 {object} object "Invalid request data"
 // @Failure 500 {object} object "Internal server error"
-// @Router /event [post]
+// @Router /events [post]
 func CreateEvent(c *gin.Context) {
 	var req CreateEventRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

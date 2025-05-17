@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
+	"github.com/aws/aws-sdk-go-v2/service/eventbridge/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -66,11 +67,11 @@ func CreateEvent(c *gin.Context) {
 		Name:               aws.String(req.Name),
 		Description:        aws.String(req.Description),
 		ScheduleExpression: aws.String(fmt.Sprintf("cron(%s)", req.Schedule)),
-		State:             "ENABLED",
+		State:             types.RuleStateEnabled,
 	}
 
 	// Create the rule
-	ruleOutput, err := client.PutRule(c.Request.Context(), ruleInput)
+	_, err = client.PutRule(c.Request.Context(), ruleInput)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to create rule: %v", err)})
 		return
@@ -79,7 +80,7 @@ func CreateEvent(c *gin.Context) {
 	// Create target input
 	targetInput := &eventbridge.PutTargetsInput{
 		Rule: aws.String(req.Name),
-		Targets: []eventbridge.Target{
+		Targets: []types.Target{
 			{
 				Id:      aws.String(fmt.Sprintf("%s-target", req.Name)),
 				Arn:     aws.String("YOUR_LAMBDA_FUNCTION_ARN"), // Replace with your Lambda function ARN

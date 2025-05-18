@@ -69,7 +69,7 @@ func CreateEvent(c *gin.Context) {
 		Name:               aws.String(req.Name),
 		Description:        aws.String(req.Description),
 		ScheduleExpression: aws.String(fmt.Sprintf("cron(%s)", req.Schedule)),
-		State:             types.RuleStateEnabled,
+		State:              types.RuleStateEnabled,
 	}
 
 	// Create the rule
@@ -84,9 +84,9 @@ func CreateEvent(c *gin.Context) {
 		Rule: aws.String(req.Name),
 		Targets: []types.Target{
 			{
-				Id:      aws.String(fmt.Sprintf("%s-target", req.Name)),
-				Arn:     aws.String("YOUR_LAMBDA_FUNCTION_ARN"), // Replace with your Lambda function ARN
-				Input:   aws.String(string(payloadJSON)),
+				Id:    aws.String(fmt.Sprintf("%s-target", req.Name)),
+				Arn:   aws.String("arn:aws:lambda:us-east-1:069597727371:function:GoApiInfraStack-ProcessDataLambdaBB06D69F-fZPprYwiMNJa"), // Replace with your Lambda function ARN
+				Input: aws.String(string(payloadJSON)),
 			},
 		},
 	}

@@ -10,7 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge/types"
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // CreateEventRequest represents the structure for creating a new event
@@ -41,6 +43,26 @@ type Event struct {
 // @Failure 500 {object} object "Internal server error"
 // @Router /events [post]
 func CreateEvent(c *gin.Context) {
+	// Get Auth0 user ID from the JWT claims
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Extract user ID from claims
+	registeredClaims, ok := claims.(validator.RegisteredClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
+		return
+	}
+
+	// Check if the user has the required Auth0 ID
+	if registeredClaims.Subject != "auth0|68164b4c821b56fdc024b2dd" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	var req CreateEventRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

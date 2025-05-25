@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge/types"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 // CreateEventRequest represents the structure for creating a new event

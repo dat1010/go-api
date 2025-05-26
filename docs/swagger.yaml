@@ -179,6 +179,28 @@ paths:
       tags:
       - auth
   /events:
+    get:
+      description: Get all EventBridge rules created by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of events
+          schema:
+            items:
+              $ref: '#/definitions/controllers.Event'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+      summary: List events for the authenticated user
+      tags:
+      - events
     post:
       consumes:
       - application/json

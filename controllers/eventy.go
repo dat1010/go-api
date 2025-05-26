@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge/types"
-	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -85,6 +86,12 @@ func CreateEvent(c *gin.Context) {
 		return
 	}
 
+	// Add user ID to the payload
+	if req.Payload == nil {
+		req.Payload = make(map[string]string)
+	}
+	req.Payload["user_id"] = registeredClaims.Subject
+
 	// Create rule input
 	ruleInput := &eventbridge.PutRuleInput{
 		Name:               aws.String(req.Name),
@@ -129,4 +136,91 @@ func CreateEvent(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, event)
+}
+
+// @Summary List events for the authenticated user
+// @Description Get all EventBridge rules created by the authenticated user
+// @Tags events
+// @Produce json
+// @Success 200 {array} controllers.Event "List of events"
+// @Failure 401 {object} object "Unauthorized"
+// @Failure 500 {object} object "Internal server error"
+// @Router /events [get]
+func ListUserEvents(c *gin.Context) {
+	// Get Auth0 user ID from the JWT claims
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Extract user ID from claims
+	registeredClaims, ok := claims.(validator.RegisteredClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
+		return
+	}
+
+	// Load AWS configuration
+	cfg, err := config.LoadDefaultConfig(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to load SDK config: %v", err)})
+		return
+	}
+
+	// Create EventBridge client
+	client := eventbridge.NewFromConfig(cfg)
+
+	// List all rules
+	listRulesInput := &eventbridge.ListRulesInput{}
+	result, err := client.ListRules(c.Request.Context(), listRulesInput)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to list rules: %v", err)})
+		return
+	}
+
+	var userEvents []Event
+
+	// For each rule, get its targets to check the payload
+	for _, rule := range result.Rules {
+		// Get targets for the rule
+		listTargetsInput := &eventbridge.ListTargetsByRuleInput{
+			Rule: rule.Name,
+		}
+		targets, err := client.ListTargetsByRule(c.Request.Context(), listTargetsInput)
+		if err != nil {
+			continue // Skip this rule if we can't get its targets
+		}
+
+		// Check each target's input for the user ID
+		for _, target := range targets.Targets {
+			if target.Input != nil {
+				var payload map[string]string
+				if err := json.Unmarshal([]byte(*target.Input), &payload); err != nil {
+					continue
+				}
+
+				// If the payload contains the user's ID, add this event to the list
+				if userID, exists := payload["user_id"]; exists && userID == registeredClaims.Subject {
+					// Extract schedule expression from the rule
+					schedule := *rule.ScheduleExpression
+					// Remove "cron(" and ")" from the schedule expression
+					schedule = strings.TrimPrefix(schedule, "cron(")
+					schedule = strings.TrimSuffix(schedule, ")")
+
+					event := Event{
+						Name:        *rule.Name,
+						Description: *rule.Description,
+						Schedule:    schedule,
+						Payload:     payload,
+						CreatedAt:   time.Now(),
+					}
+					userEvents = append(userEvents, event)
+					break // Found a matching target, no need to check other targets for this rule
+				}
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, userEvents)
 }

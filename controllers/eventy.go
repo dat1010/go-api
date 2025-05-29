@@ -79,18 +79,18 @@ func CreateEvent(c *gin.Context) {
 	// Create EventBridge client
 	client := eventbridge.NewFromConfig(cfg)
 
+	// Add user ID to the payload
+	if req.Payload == nil {
+		req.Payload = make(map[string]string)
+	}
+	req.Payload["user_id"] = registeredClaims.Subject
+
 	// Convert payload to JSON string
 	payloadJSON, err := json.Marshal(req.Payload)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to marshal payload: %v", err)})
 		return
 	}
-
-	// Add user ID to the payload
-	if req.Payload == nil {
-		req.Payload = make(map[string]string)
-	}
-	req.Payload["user_id"] = registeredClaims.Subject
 
 	// Create rule input
 	ruleInput := &eventbridge.PutRuleInput{

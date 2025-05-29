@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -113,7 +114,7 @@ func CreateEvent(c *gin.Context) {
 		Targets: []types.Target{
 			{
 				Id:    aws.String(fmt.Sprintf("%s-target", req.Name)),
-				Arn:   aws.String("arn:aws:lambda:us-east-1:069597727371:function:GoApiInfraStack-ProcessDataLambdaBB06D69F-fZPprYwiMNJa"), // Replace with your Lambda function ARN
+				Arn:   aws.String(os.Getenv("LAMBDA_ARN")),
 				Input: aws.String(string(payloadJSON)),
 			},
 		},

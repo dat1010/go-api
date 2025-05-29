@@ -179,48 +179,62 @@ func ListUserEvents(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("Found %d total rules\n", len(result.Rules))
+	fmt.Printf("Current user ID: %s\n", registeredClaims.Subject)
+
 	var userEvents []Event
 
 	// For each rule, get its targets to check the payload
 	for _, rule := range result.Rules {
+		fmt.Printf("Checking rule: %s\n", *rule.Name)
 		// Get targets for the rule
 		listTargetsInput := &eventbridge.ListTargetsByRuleInput{
 			Rule: rule.Name,
 		}
 		targets, err := client.ListTargetsByRule(c.Request.Context(), listTargetsInput)
 		if err != nil {
+			fmt.Printf("Error getting targets for rule %s: %v\n", *rule.Name, err)
 			continue // Skip this rule if we can't get its targets
 		}
+
+		fmt.Printf("Found %d targets for rule %s\n", len(targets.Targets), *rule.Name)
 
 		// Check each target's input for the user ID
 		for _, target := range targets.Targets {
 			if target.Input != nil {
+				fmt.Printf("Target input: %s\n", *target.Input)
 				var payload map[string]string
 				if err := json.Unmarshal([]byte(*target.Input), &payload); err != nil {
+					fmt.Printf("Error unmarshaling payload: %v\n", err)
 					continue
 				}
 
 				// If the payload contains the user's ID, add this event to the list
-				if userID, exists := payload["user_id"]; exists && userID == registeredClaims.Subject {
-					// Extract schedule expression from the rule
-					schedule := *rule.ScheduleExpression
-					// Remove "cron(" and ")" from the schedule expression
-					schedule = strings.TrimPrefix(schedule, "cron(")
-					schedule = strings.TrimSuffix(schedule, ")")
+				if userID, exists := payload["user_id"]; exists {
+					fmt.Printf("Found user_id in payload: %s\n", userID)
+					if userID == registeredClaims.Subject {
+						fmt.Printf("Matched user ID for rule %s\n", *rule.Name)
+						// Extract schedule expression from the rule
+						schedule := *rule.ScheduleExpression
+						// Remove "cron(" and ")" from the schedule expression
+						schedule = strings.TrimPrefix(schedule, "cron(")
+						schedule = strings.TrimSuffix(schedule, ")")
 
-					event := Event{
-						Name:        *rule.Name,
-						Description: *rule.Description,
-						Schedule:    schedule,
-						Payload:     payload,
-						CreatedAt:   time.Now(),
+						event := Event{
+							Name:        *rule.Name,
+							Description: *rule.Description,
+							Schedule:    schedule,
+							Payload:     payload,
+							CreatedAt:   time.Now(),
+						}
+						userEvents = append(userEvents, event)
+						break // Found a matching target, no need to check other targets for this rule
 					}
-					userEvents = append(userEvents, event)
-					break // Found a matching target, no need to check other targets for this rule
 				}
 			}
 		}
 	}
 
+	fmt.Printf("Returning %d events for user\n", len(userEvents))
 	c.JSON(http.StatusOK, userEvents)
 }

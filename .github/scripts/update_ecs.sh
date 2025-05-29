@@ -31,7 +31,8 @@ NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUN
       { "name": "AUTH0_CLIENT_SECRET","valueFrom": "\($SECRET_ARN):AUTH0_CLIENT_SECRET::" },
       { "name": "AUTH0_CALLBACK_URL", "valueFrom": "\($SECRET_ARN):AUTH0_CALLBACK_URL::" },
       { "name": "TURSO_DATABASE_URL", "valueFrom": "\($SECRET_ARN):TURSO_DATABASE_URL::" },
-      { "name": "TURSO_AUTH_TOKEN",   "valueFrom": "\($SECRET_ARN):TURSO_AUTH_TOKEN::" }
+      { "name": "TURSO_AUTH_TOKEN",   "valueFrom": "\($SECRET_ARN):TURSO_AUTH_TOKEN::" },
+      { "name": "LAMBDA_ARN",   "valueFrom": "\($SECRET_ARN):LAMBDA_ARN::" }
     ]')
 
 # Add port 8080 separately, ensuring we don't duplicate

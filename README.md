@@ -1,5 +1,7 @@
 # go‑api
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/dat1010/go-api?utm_source=oss&utm_medium=github&utm_campaign=dat1010%2Fgo-api&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 This will be a simple API written in Golang. Mostly just trying to learn golang a little bit and do something fun.
 
 Not sure what the direction of this api will be. starting simple with a /api/healthcheck at frist and growing from there.

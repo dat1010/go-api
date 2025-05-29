@@ -97,16 +97,21 @@ func Logout(c *gin.Context) {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	clientID := os.Getenv("AUTH0_CLIENT_ID")
 	returnTo := os.Getenv("AUTH0_LOGOUT_RETURN_URL")
-
 	// Clear the authentication cookie
 	c.SetCookie(
 		"id_token", "",
-		-1, "/", "nofeed.zone", true, false)
-
+		-1, "/", "nofeed.zone", true, true) // httpOnly=true
+	// Validate required env vars
+	if domain == "" || clientID == "" || returnTo == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "logout env vars not set"})
+		return
+	}
 	// Construct the Auth0 logout URL
-	logoutURL := "https://" + domain + "/v2/logout" +
-		"?client_id=" + clientID +
-		"&returnTo=" + returnTo
-
+	logoutURL := fmt.Sprintf(
+		"https://%s/v2/logout?client_id=%s&returnTo=%s",
+		domain,
+		clientID,
+		url.QueryEscape(returnTo),
+	)
 	c.Redirect(http.StatusTemporaryRedirect, logoutURL)
 }

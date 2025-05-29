@@ -26,6 +26,17 @@ func (c CustomClaims) Validate(ctx context.Context) error {
 	return nil
 }
 
+// Add this type at the top of the file, after the imports
+type responseRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (r *responseRecorder) WriteHeader(statusCode int) {
+	r.statusCode = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
 func Auth0() gin.HandlerFunc {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	audience := os.Getenv("AUTH0_AUDIENCE")
@@ -81,19 +92,18 @@ func Auth0() gin.HandlerFunc {
 		req := c.Request.Clone(c.Request.Context())
 		req.Header.Set("Authorization", authHeader)
 
-		// Validate the token
-		var validationError error
+		// Create a response writer that can capture validation failures
+		recorder := &responseRecorder{ResponseWriter: c.Writer}
 		var handler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 			c.Request = r
-			validationError = nil
 		}
 
-		middleware.CheckJWT(handler).ServeHTTP(c.Writer, req)
+		middleware.CheckJWT(handler).ServeHTTP(recorder, req)
 
-		if validationError != nil {
+		if recorder.statusCode >= 400 {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Invalid token",
-				"details": validationError.Error(),
+				"details": "Token validation failed",
 			})
 			return
 		}

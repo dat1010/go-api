@@ -39,16 +39,17 @@ jobs:
           if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
             # Get the latest version tag
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-            
-            # Remove the 'v' prefix and split into components
-            VERSION_PARTS=(${LATEST_TAG#v//./ })
+
+            # Strip the 'v' prefix and split into major, minor, patch
+            LATEST_CLEAN=${LATEST_TAG#v}
+            VERSION_PARTS=(${LATEST_CLEAN//./ })
             MAJOR=${VERSION_PARTS[0]:-0}
             MINOR=${VERSION_PARTS[1]:-0}
             PATCH=${VERSION_PARTS[2]:-0}
-            
+
             # Increment patch version
             PATCH=$((PATCH + 1))
-            
+
             # Construct new version
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
           else

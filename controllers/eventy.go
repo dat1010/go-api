@@ -58,12 +58,6 @@ func CreateEvent(c *gin.Context) {
 		return
 	}
 
-	// Check if the user has the required Auth0 ID
-	if registeredClaims.Subject != "auth0|68164b4c821b56fdc024b2dd" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-
 	var req CreateEventRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -224,4 +218,100 @@ func ListUserEvents(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, userEvents)
+}
+
+// @Summary Delete a scheduled event
+// @Description Delete an AWS EventBridge rule and its associated targets
+// @Tags events
+// @Produce json
+// @Param name path string true "Event name"
+// @Success 200 {object} object "Event deleted successfully"
+// @Failure 401 {object} object "Unauthorized"
+// @Failure 403 {object} object "Forbidden - User does not own this event"
+// @Failure 404 {object} object "Event not found"
+// @Failure 500 {object} object "Internal server error"
+// @Router /events/{name} [delete]
+func DeleteEvent(c *gin.Context) {
+	// Get Auth0 user ID from the JWT claims
+	claims, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Extract user ID from claims
+	registeredClaims, ok := claims.(validator.RegisteredClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
+		return
+	}
+
+	// Get event name from path parameter
+	eventName := c.Param("name")
+	if eventName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Event name is required"})
+		return
+	}
+
+	// Load AWS configuration
+	cfg, err := config.LoadDefaultConfig(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to load SDK config: %v", err)})
+		return
+	}
+
+	// Create EventBridge client
+	client := eventbridge.NewFromConfig(cfg)
+
+	// Get targets for the rule to verify ownership
+	listTargetsInput := &eventbridge.ListTargetsByRuleInput{
+		Rule: aws.String(eventName),
+	}
+	targets, err := client.ListTargetsByRule(c.Request.Context(), listTargetsInput)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Event not found"})
+		return
+	}
+
+	// Verify that the user owns this event
+	userOwnsEvent := false
+	for _, target := range targets.Targets {
+		if target.Input != nil {
+			var payload map[string]string
+			if err := json.Unmarshal([]byte(*target.Input), &payload); err != nil {
+				continue
+			}
+
+			if userID, exists := payload["user_id"]; exists && userID == registeredClaims.Subject {
+				userOwnsEvent = true
+				break
+			}
+		}
+	}
+
+	if !userOwnsEvent {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission to delete this event"})
+		return
+	}
+
+	// Remove all targets first
+	_, err = client.RemoveTargets(c.Request.Context(), &eventbridge.RemoveTargetsInput{
+		Rule: aws.String(eventName),
+		Ids:  []string{fmt.Sprintf("%s-target", eventName)},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to remove targets: %v", err)})
+		return
+	}
+
+	// Delete the rule
+	_, err = client.DeleteRule(c.Request.Context(), &eventbridge.DeleteRuleInput{
+		Name: aws.String(eventName),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to delete rule: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Event deleted successfully"})
 }

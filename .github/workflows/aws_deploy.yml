@@ -1,19 +1,19 @@
-name: Deploy to Environments
+name: Deploy to Staging
 
 on:
   push:
     branches:
-      - 'release_*'  # triggers on branches starting with "release_" for staging
+      - 'main'      # triggers on main branch for releases
+      - 'feature/*' # triggers on feature branches for staging
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to deploy to production (format: 1.0.0)'
+      branch:
+        description: 'Branch to deploy to staging'
         required: true
         type: string
 
 jobs:
   deploy-to-staging:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: staging
     steps:
@@ -27,10 +27,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Extract version from branch name
-        id: extract_version
+      - name: Set version
+        id: set_version
         run: |
-          VERSION="${GITHUB_REF#refs/heads/release_}"
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            # For main branch, use the latest tag or default to 1.0.0
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
+          else
+            # For feature branches, use branch name and commit hash
+            BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')
+            COMMIT_HASH=$(git rev-parse --short HEAD)
+            VERSION="${BRANCH_NAME}-${COMMIT_HASH}"
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Log in to Amazon ECR
@@ -59,46 +67,12 @@ jobs:
           chmod +x ./.github/scripts/update_ecs.sh
           ./.github/scripts/update_ecs.sh
 
-  deploy-to-production:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Set version from input
-        run: |
-          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-
-      - name: Log in to Amazon ECR
-        run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
-
-      - name: Update ECS Service
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          TASK_DEFINITION: GoApiProdInfraStackGoApiProdFargateServiceTaskDef48554D7D
-          CLUSTER: GoApiProdInfraStack-GoApiProdClusterEF8B48A5-5wfdJ3sUtyug
-          SERVICE: GoApiProdInfraStack-GoApiProdFargateService66083257-2grSv3vpcGFB
-          SECRET_ARN: arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50
-        run: |
-          chmod +x ./.github/scripts/update_ecs.sh
-          ./.github/scripts/update_ecs.sh
-          
-      - name: Create and push Git tag
-        if: success()  # Only run if previous steps succeeded
+      - name: Create Git tag for releases
+        if: github.ref == 'refs/heads/main'
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git tag -a "v${{ env.VERSION }}" -m "Production release v${{ env.VERSION }}"
+          git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
           git push origin "v${{ env.VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

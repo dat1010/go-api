@@ -232,6 +232,8 @@ paths:
       - events
   /events/{name}:
     delete:
+      security:
+        - Bearer: []
       description: Delete an AWS EventBridge rule and its associated targets
       parameters:
       - description: Event name

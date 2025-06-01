@@ -12,6 +12,10 @@ on:
         required: true
         type: string
 
+# Add permissions block at the workflow level
+permissions:
+  contents: write  # This allows the workflow to create tags
+
 jobs:
   deploy-to-staging:
     runs-on: ubuntu-latest
@@ -19,6 +23,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for versioning
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -31,8 +37,20 @@ jobs:
         id: set_version
         run: |
           if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
-            # For main branch, use the latest tag or default to 1.0.0
-            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
+            # Get the latest version tag
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            
+            # Remove the 'v' prefix and split into components
+            VERSION_PARTS=(${LATEST_TAG#v//./ })
+            MAJOR=${VERSION_PARTS[0]:-0}
+            MINOR=${VERSION_PARTS[1]:-0}
+            PATCH=${VERSION_PARTS[2]:-0}
+            
+            # Increment patch version
+            PATCH=$((PATCH + 1))
+            
+            # Construct new version
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
           else
             # For feature branches, use branch name and commit hash
             BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')
@@ -40,6 +58,7 @@ jobs:
             VERSION="${BRANCH_NAME}-${COMMIT_HASH}"
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "New version: $VERSION"
 
       - name: Log in to Amazon ECR
         run: |

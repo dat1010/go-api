@@ -135,7 +135,9 @@ func GetPost(c *gin.Context) {
 // @Failure 403 {object} object "Forbidden"
 // @Failure 404 {object} object "Post not found"
 // @Failure 500 {object} object "Internal server error"
-// @Router /posts/{id} [put]
+// UpdatePost updates an existing blog post if the authenticated user is the owner.
+// Accepts a JSON payload with optional fields to update the post's title, content, or published status.
+// Returns the updated post as JSON on success, or an appropriate error response if the post does not exist, the user is unauthorized, or the user does not own the post.
 func UpdatePost(c *gin.Context) {
 	id := c.Param("id")
 	var req UpdatePostRequest
@@ -220,7 +222,8 @@ func UpdatePost(c *gin.Context) {
 // @Failure 403 {object} object "Forbidden"
 // @Failure 404 {object} object "Post not found"
 // @Failure 500 {object} object "Internal server error"
-// @Router /posts/{id} [delete]
+// DeletePost deletes a blog post by its ID if the authenticated user is the owner.
+// Responds with HTTP 204 No Content on success, 401 if unauthorized, 403 if forbidden, 404 if not found, or 500 on server error.
 func DeletePost(c *gin.Context) {
 	id := c.Param("id")
 

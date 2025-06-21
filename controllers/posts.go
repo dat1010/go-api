@@ -150,7 +150,13 @@ func UpdatePost(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-	userID := claims.(map[string]interface{})["sub"].(string)
+
+	// Extract user ID from claims
+	registeredClaims, ok := claims.(validator.RegisteredClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
+		return
+	}
 
 	db := c.MustGet("db").(*sqlx.DB)
 
@@ -166,7 +172,7 @@ func UpdatePost(c *gin.Context) {
 		return
 	}
 
-	if post.Auth0UserID != userID {
+	if post.Auth0UserID != registeredClaims.Subject {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission to update this post"})
 		return
 	}
@@ -184,7 +190,7 @@ func UpdatePost(c *gin.Context) {
 		"title":         req.Title,
 		"content":       req.Content,
 		"published":     req.Published,
-		"auth0_user_id": userID,
+		"auth0_user_id": registeredClaims.Subject,
 	}
 
 	_, err = db.NamedExec(updateQuery, params)
@@ -224,7 +230,13 @@ func DeletePost(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-	userID := claims.(map[string]interface{})["sub"].(string)
+
+	// Extract user ID from claims
+	registeredClaims, ok := claims.(validator.RegisteredClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
+		return
+	}
 
 	db := c.MustGet("db").(*sqlx.DB)
 
@@ -240,13 +252,13 @@ func DeletePost(c *gin.Context) {
 		return
 	}
 
-	if post.Auth0UserID != userID {
+	if post.Auth0UserID != registeredClaims.Subject {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission to delete this post"})
 		return
 	}
 
 	// Delete the post
-	_, err = db.Exec("DELETE FROM posts WHERE id = ? AND auth0_user_id = ?", id, userID)
+	_, err = db.Exec("DELETE FROM posts WHERE id = ? AND auth0_user_id = ?", id, registeredClaims.Subject)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

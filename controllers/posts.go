@@ -248,7 +248,7 @@ func DeletePost(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error while checking post: " + err.Error()})
 		return
 	}
 
@@ -258,9 +258,21 @@ func DeletePost(c *gin.Context) {
 	}
 
 	// Delete the post
-	_, err = db.Exec("DELETE FROM posts WHERE id = ? AND auth0_user_id = ?", id, registeredClaims.Subject)
+	result, err := db.Exec("DELETE FROM posts WHERE id = ? AND auth0_user_id = ?", id, registeredClaims.Subject)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error while deleting post: " + err.Error()})
+		return
+	}
+
+	// Check if any rows were actually deleted
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking rows affected: " + err.Error()})
+		return
+	}
+
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found or already deleted"})
 		return
 	}
 

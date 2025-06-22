@@ -38,6 +38,11 @@ type UpdatePostRequest struct {
 
 var postService services.PostService // This should be set up in main.go or via DI
 
+// SetPostService sets the post service for the controllers
+func SetPostService(service services.PostService) {
+	postService = service
+}
+
 // @Summary Create a new post
 // @Description Create a new post with the provided data
 // @Tags posts

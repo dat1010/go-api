@@ -73,7 +73,7 @@ func main() {
 	// Register routes
 	api := router.Group("/api")
 	routes.RegisterRoutes(api)
-	// routes.RegisterPostRoutes(api) // This creates duplicate routes - removing
+	routes.RegisterPostRoutes(api)
 
 	// serve Swagger UI with custom configuration
 	swaggerHandler := ginSwagger.DisablingWrapHandler(swaggerFiles.Handler, "DISABLE_SWAGGER_HTTP_HANDLER")

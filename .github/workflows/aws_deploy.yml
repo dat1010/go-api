@@ -67,9 +67,15 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t go-api .
+          docker build --no-cache -t go-api .
           docker tag go-api:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}
           docker tag go-api:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:latest
+
+      - name: Verify Swagger docs in container
+        run: |
+          # Create a temporary container to check if docs were generated
+          docker run --rm go-api:latest ls -la /root/docs/ || echo "Docs directory not found"
+          docker run --rm go-api:latest cat /root/docs/swagger.json | jq '.paths | keys' || echo "Failed to read swagger.json"
 
       - name: Push Docker image to ECR
         run: |

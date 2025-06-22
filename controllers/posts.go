@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/auth0/go-jwt-middleware/v2/validator"
+	"github.com/dat1010/go-api/models"
+	"github.com/dat1010/go-api/services"
+	"github.com/dat1010/go-api/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -34,6 +36,8 @@ type UpdatePostRequest struct {
 	Published *bool  `json:"published"`
 }
 
+var postService services.PostService // This should be set up in main.go or via DI
+
 // @Summary Create a new post
 // @Description Create a new post with the provided data
 // @Tags posts
@@ -47,45 +51,19 @@ type UpdatePostRequest struct {
 // @Failure 500 {object} object "Internal server error"
 // @Router /posts [post]
 func CreatePost(c *gin.Context) {
-	var req CreatePostRequest
+	var req models.CreatePostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Get Auth0 user ID from the JWT claims
-	claims, exists := c.Get("user")
-	if !exists {
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Extract user ID from claims
-	registeredClaims, ok := claims.(validator.RegisteredClaims)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid claims format"})
-		return
-	}
-
-	// Generate a unique slug from the title
-	slug := generateSlug(req.Title)
-
-	post := Post{
-		ID:          uuid.New().String(),
-		Title:       req.Title,
-		Content:     req.Content,
-		Auth0UserID: registeredClaims.Subject,
-		Published:   req.Published,
-		Slug:        slug,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-
-	db := c.MustGet("db").(*sqlx.DB)
-	query := `INSERT INTO posts (id, title, content, auth0_user_id, created_at, updated_at, published, slug)
-			  VALUES (:id, :title, :content, :auth0_user_id, :created_at, :updated_at, :published, :slug)`
-
-	_, err := db.NamedExec(query, post)
+	post, err := postService.CreatePost(&req, auth0UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

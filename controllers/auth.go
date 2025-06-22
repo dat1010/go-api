@@ -56,8 +56,12 @@ func Callback(c *gin.Context) {
 	clientID := os.Getenv("AUTH0_CLIENT_ID")
 	clientSecret := os.Getenv("AUTH0_CLIENT_SECRET")
 	redirectURI := os.Getenv("AUTH0_CALLBACK_URL")
+	scheme := os.Getenv("AUTH0_SCHEME")
+	if scheme == "" {
+		scheme = "https"
+	}
 
-	tokenURL := "https://" + domain + "/oauth/token"
+	tokenURL := scheme + "://" + domain + "/oauth/token"
 	reqBody := map[string]string{
 		"grant_type":    "authorization_code",
 		"client_id":     clientID,

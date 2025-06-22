@@ -297,10 +297,3 @@ func ListPosts(c *gin.Context) {
 
 	c.JSON(http.StatusOK, posts)
 }
-
-// Helper function to generate a URL-friendly slug from a title
-func generateSlug(title string) string {
-	// TODO: Implement proper slug generation
-	// For now, just return a simple slug
-	return title
-}

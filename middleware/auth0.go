@@ -76,21 +76,32 @@ func Auth0() gin.HandlerFunc {
 	middleware := jwtmiddleware.New(jwtValidator.ValidateToken)
 
 	return func(c *gin.Context) {
+		// Check for Authorization header first
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
-			return
+		var token string
+
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				token = parts[1]
+			}
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header format must be Bearer {token}"})
+		// If no Authorization header, check for id_token cookie
+		if token == "" {
+			if cookie, err := c.Cookie("id_token"); err == nil && cookie != "" {
+				token = cookie
+			}
+		}
+
+		if token == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header or id_token cookie is required"})
 			return
 		}
 
 		// Create a new request with the token
 		req := c.Request.Clone(c.Request.Context())
-		req.Header.Set("Authorization", authHeader)
+		req.Header.Set("Authorization", "Bearer "+token)
 
 		// Create a response writer that can capture validation failures
 		recorder := &responseRecorder{ResponseWriter: c.Writer}
@@ -102,7 +113,7 @@ func Auth0() gin.HandlerFunc {
 
 		if recorder.statusCode >= 400 {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token",
+				"error":   "Invalid token",
 				"details": "Token validation failed",
 			})
 			return
@@ -112,7 +123,7 @@ func Auth0() gin.HandlerFunc {
 		claims, ok := c.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token format",
+				"error":   "Invalid token format",
 				"details": "Could not extract claims from token",
 			})
 			return

@@ -103,21 +103,49 @@ func Logout(c *gin.Context) {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	clientID := os.Getenv("AUTH0_CLIENT_ID")
 	returnTo := os.Getenv("AUTH0_LOGOUT_RETURN_URL")
+
 	// Clear the authentication cookie
 	c.SetCookie(
 		"id_token", "",
 		-1, "/", "nofeed.zone", true, true) // httpOnly=true
+
 	// Validate required env vars
 	if domain == "" || clientID == "" || returnTo == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "logout env vars not set"})
 		return
 	}
-	// Construct the Auth0 logout URL
+
+	// Construct the Auth0 logout URL with federated logout to clear all sessions
 	logoutURL := fmt.Sprintf(
-		"https://%s/v2/logout?client_id=%s&returnTo=%s",
+		"https://%s/v2/logout?client_id=%s&returnTo=%s&federated",
 		domain,
 		clientID,
 		url.QueryEscape(returnTo),
 	)
 	c.Redirect(http.StatusTemporaryRedirect, logoutURL)
+}
+
+// @Summary Check authentication status
+// @Description Check if the user is authenticated via cookie
+// @Tags auth
+// @Produce json
+// @Success 200 {object} object "User is authenticated"
+// @Failure 401 {object} object "User is not authenticated"
+// @Router /api/me [get]
+func CheckAuth(c *gin.Context) {
+	// Check for id_token cookie
+	if cookie, err := c.Cookie("id_token"); err == nil && cookie != "" {
+		// Token exists, user is authenticated
+		c.JSON(http.StatusOK, gin.H{
+			"authenticated": true,
+			"message":       "User is authenticated",
+		})
+		return
+	}
+
+	// No valid cookie found
+	c.JSON(http.StatusUnauthorized, gin.H{
+		"authenticated": false,
+		"message":       "User is not authenticated",
+	})
 }

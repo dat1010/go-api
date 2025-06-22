@@ -1,11 +1,20 @@
 # Build Stage: Compile the Go application using Go 1.24.1
 FROM golang:1.24.1-alpine AS build
 WORKDIR /app
+
+# Install swag CLI tool for generating Swagger documentation
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
 # Copy dependency files and download modules
 COPY go.mod go.sum ./
 RUN go mod download
-# Copy the rest of the code and build
+
+# Copy the rest of the code
 COPY . .
+
+# Generate Swagger documentation
+RUN go generate ./cmd
+
 # Build the binary; disable CGO for a statically linked binary
 RUN CGO_ENABLED=0 GOOS=linux go build -a -o main ./cmd/
 

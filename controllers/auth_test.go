@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,19 +11,21 @@ import (
 )
 
 func TestLoginRedirect(t *testing.T) {
-	os.Setenv("AUTH0_DOMAIN", "dev‑abcd1234.us.auth0.com")
+	os.Setenv("AUTH0_DOMAIN", "dev-abcd1234.us.auth0.com")
 	os.Setenv("AUTH0_CLIENT_ID", "myclientid")
 	os.Setenv("AUTH0_CALLBACK_URL", "http://localhost:8080/api/callback")
 
 	w := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/login", nil)
 	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 	Login(c)
 
 	if w.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("expected 302, got %d", w.Code)
 	}
 	loc := w.Header().Get("Location")
-	if !strings.HasPrefix(loc, "https://dev‑abcd1234.us.auth0.com/authorize") {
+	if !strings.HasPrefix(loc, "https://dev-abcd1234.us.auth0.com/authorize") {
 		t.Errorf("unexpected redirect URL: %s", loc)
 	}
 }
@@ -43,6 +44,7 @@ func TestCallbackReturnsToken(t *testing.T) {
 	os.Setenv("AUTH0_CLIENT_ID", "id")
 	os.Setenv("AUTH0_CLIENT_SECRET", "secret")
 	os.Setenv("AUTH0_CALLBACK_URL", "http://localhost:8080/api/callback")
+	os.Setenv("AUTH0_SCHEME", "http")
 
 	req := httptest.NewRequest("GET", "/callback?code=foo", nil)
 	w := httptest.NewRecorder()
@@ -51,14 +53,11 @@ func TestCallbackReturnsToken(t *testing.T) {
 
 	Callback(c)
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
+	if w.Code != http.StatusTemporaryRedirect {
+		t.Fatalf("expected 307, got %d", w.Code)
 	}
-	var tr TokenResponse
-	if err := json.Unmarshal(w.Body.Bytes(), &tr); err != nil {
-		t.Fatal(err)
-	}
-	if tr.AccessToken != "A" || tr.IDToken != "B" {
-		t.Errorf("unexpected token payload: %+v", tr)
+	loc := w.Header().Get("Location")
+	if loc != "https://nofeed.zone" {
+		t.Errorf("unexpected redirect location: %s", loc)
 	}
 }

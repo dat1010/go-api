@@ -12,6 +12,7 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	api.GET("/login", controllers.Login)
 	api.GET("/callback", controllers.Callback)
 	api.GET("/logout", controllers.Logout)
+	api.GET("/me", controllers.CheckAuth)
 
 	// Public routes
 	api.GET("/healthcheck", controllers.GetHealthCheck)

@@ -11,9 +11,12 @@ import (
 	"time"
 
 	"github.com/dat1010/go-api/config"
+	"github.com/dat1010/go-api/controllers"
 	_ "github.com/dat1010/go-api/docs"
 	"github.com/dat1010/go-api/middleware"
+	"github.com/dat1010/go-api/repositories"
 	"github.com/dat1010/go-api/routes"
+	"github.com/dat1010/go-api/services"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -45,6 +48,13 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
+
+	// Initialize repositories and services
+	postRepo := repositories.NewPostRepository(db)
+	postService := services.NewPostService(postRepo)
+
+	// Set the post service for controllers
+	controllers.SetPostService(postService)
 
 	router := gin.Default()
 

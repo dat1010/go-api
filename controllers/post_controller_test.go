@@ -23,12 +23,14 @@ type mockPostService struct {
 func (m *mockPostService) CreatePost(req *models.CreatePostRequest, auth0UserID string) (*models.Post, error) {
 	return m.CreatePostFunc(req, auth0UserID)
 }
+
 func (m *mockPostService) GetPost(id string) (*models.Post, error) {
 	if m.GetPostFunc != nil {
 		return m.GetPostFunc(id)
 	}
 	return nil, nil
 }
+
 func (m *mockPostService) UpdatePost(id string, req *models.UpdatePostRequest, auth0UserID string) (*models.Post, error) {
 	return nil, nil
 }
@@ -108,7 +110,7 @@ func TestGetPost_Success(t *testing.T) {
 	r.GET("/posts/:id", GetPost)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/posts/test-id", nil)
+	req, _ := http.NewRequest("GET", "/posts/test-id", http.NoBody)
 
 	r.ServeHTTP(w, req)
 
@@ -140,7 +142,7 @@ func TestGetPost_NotFound(t *testing.T) {
 	r.GET("/posts/:id", GetPost)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/posts/nonexistent-id", nil)
+	req, _ := http.NewRequest("GET", "/posts/nonexistent-id", http.NoBody)
 
 	r.ServeHTTP(w, req)
 
@@ -167,7 +169,7 @@ func TestGetPost_InternalServerError(t *testing.T) {
 	r.GET("/posts/:id", GetPost)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/posts/test-id", nil)
+	req, _ := http.NewRequest("GET", "/posts/test-id", http.NoBody)
 
 	r.ServeHTTP(w, req)
 

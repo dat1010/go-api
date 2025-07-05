@@ -62,6 +62,13 @@ func Callback(c *gin.Context) {
 	}
 
 	tokenURL := scheme + "://" + domain + "/oauth/token"
+
+	// Validate the URL to prevent potential security issues
+	if _, err := url.Parse(tokenURL); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid token URL"})
+		return
+	}
+
 	reqBody := map[string]string{
 		"grant_type":    "authorization_code",
 		"client_id":     clientID,
@@ -69,7 +76,11 @@ func Callback(c *gin.Context) {
 		"code":          code,
 		"redirect_uri":  redirectURI,
 	}
-	payload, _ := json.Marshal(reqBody)
+	payload, err := json.Marshal(reqBody)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal request body"})
+		return
+	}
 	resp, err := http.Post(tokenURL, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

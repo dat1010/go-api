@@ -1,6 +1,10 @@
 run:
   timeout: 5m
   go: "1.21"
+  skip-dirs:
+    - docs/
+    - vendor/
+    - migrations/
 
 linters:
   enable:
@@ -58,4 +62,7 @@ issues:
         - gosec
     - path: cmd/
       linters:
-        - gosec 
+        - gosec
+    - path: docs/
+      linters:
+        - all 

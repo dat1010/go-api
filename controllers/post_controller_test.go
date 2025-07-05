@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,12 +17,18 @@ import (
 
 type mockPostService struct {
 	CreatePostFunc func(req *models.CreatePostRequest, auth0UserID string) (*models.Post, error)
+	GetPostFunc    func(id string) (*models.Post, error)
 }
 
 func (m *mockPostService) CreatePost(req *models.CreatePostRequest, auth0UserID string) (*models.Post, error) {
 	return m.CreatePostFunc(req, auth0UserID)
 }
-func (m *mockPostService) GetPost(id string) (*models.Post, error) { return nil, nil }
+func (m *mockPostService) GetPost(id string) (*models.Post, error) {
+	if m.GetPostFunc != nil {
+		return m.GetPostFunc(id)
+	}
+	return nil, nil
+}
 func (m *mockPostService) UpdatePost(id string, req *models.UpdatePostRequest, auth0UserID string) (*models.Post, error) {
 	return nil, nil
 }
@@ -73,4 +81,99 @@ func TestCreatePost_Success(t *testing.T) {
 	assert.Equal(t, "Test Content", resp.Content)
 	assert.Equal(t, true, resp.Published)
 	assert.Equal(t, "auth0|testuser", resp.Auth0UserID)
+}
+
+func TestGetPost_Success(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	expectedPost := &models.Post{
+		ID:          "test-id",
+		Title:       "Test Post",
+		Content:     "Test Content",
+		Auth0UserID: "auth0|testuser",
+		Published:   true,
+		Slug:        "test-post",
+	}
+
+	mockService := &mockPostService{
+		GetPostFunc: func(id string) (*models.Post, error) {
+			return expectedPost, nil
+		},
+	}
+
+	// Set the mock service
+	postService = mockService
+
+	r := gin.Default()
+	r.GET("/posts/:id", GetPost)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/posts/test-id", nil)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var resp models.Post
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedPost.ID, resp.ID)
+	assert.Equal(t, expectedPost.Title, resp.Title)
+	assert.Equal(t, expectedPost.Content, resp.Content)
+	assert.Equal(t, expectedPost.Auth0UserID, resp.Auth0UserID)
+	assert.Equal(t, expectedPost.Published, resp.Published)
+	assert.Equal(t, expectedPost.Slug, resp.Slug)
+}
+
+func TestGetPost_NotFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockService := &mockPostService{
+		GetPostFunc: func(id string) (*models.Post, error) {
+			return nil, sql.ErrNoRows
+		},
+	}
+
+	// Set the mock service
+	postService = mockService
+
+	r := gin.Default()
+	r.GET("/posts/:id", GetPost)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/posts/nonexistent-id", nil)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	var resp map[string]interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, "Post not found", resp["error"])
+}
+
+func TestGetPost_InternalServerError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockService := &mockPostService{
+		GetPostFunc: func(id string) (*models.Post, error) {
+			return nil, errors.New("database connection failed")
+		},
+	}
+
+	// Set the mock service
+	postService = mockService
+
+	r := gin.Default()
+	r.GET("/posts/:id", GetPost)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/posts/test-id", nil)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	var resp map[string]interface{}
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, "database connection failed", resp["error"])
 }

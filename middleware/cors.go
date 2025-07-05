@@ -21,4 +21,4 @@ func CORS() gin.HandlerFunc {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	})
-} 
+}

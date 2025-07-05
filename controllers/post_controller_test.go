@@ -67,7 +67,8 @@ func TestCreatePost_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	var resp models.Post
-	json.Unmarshal(w.Body.Bytes(), &resp)
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
 	assert.Equal(t, "Test Title", resp.Title)
 	assert.Equal(t, "Test Content", resp.Content)
 	assert.Equal(t, true, resp.Published)

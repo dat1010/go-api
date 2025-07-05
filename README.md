@@ -1,6 +1,9 @@
 # go‑api
 
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/dat1010/go-api?utm_source=oss&utm_medium=github&utm_campaign=dat1010%2Fgo-api&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+![Test Coverage](https://img.shields.io/codecov/c/github/dat1010/go-api?token=CODECOV_TOKEN)
+![Go Version](https://img.shields.io/github/go-mod/go-version/dat1010/go-api)
+![License](https://img.shields.io/github/license/dat1010/go-api)
 
 This will be a simple API written in Golang. Mostly just trying to learn golang a little bit and do something fun.
 
@@ -45,4 +48,60 @@ or run
 
 ```
 go generate ./cmd
+```
+
+## Testing
+
+### Run Tests Locally
+
+```bash
+# Run all tests
+go test -v ./...
+
+# Run tests with coverage
+go test -v -coverprofile=coverage.out ./...
+
+# View coverage report
+go tool cover -html=coverage.out -o coverage.html
+```
+
+### Using the Test Script
+
+We provide a convenient script that generates docs and runs tests:
+
+```bash
+./scripts/test.sh
+```
+
+This script will:
+- Install dependencies
+- Generate Swagger documentation
+- Run all tests with coverage
+- Display coverage summary
+
+### Test Coverage
+
+Test coverage is automatically calculated and uploaded to [Codecov](https://codecov.io) on every push and pull request. The current coverage is displayed in the badge above.
+
+#### Setting up Codecov
+
+1. Go to [Codecov.io](https://codecov.io) and sign in with your GitHub account
+2. Add your repository to Codecov
+3. Get your repository token from Codecov
+4. Add the token as a GitHub secret named `CODECOV_TOKEN`
+5. Update the badge URL in this README with your actual token
+
+The badge will automatically update with your current coverage percentage.
+
+### Running Specific Tests
+
+```bash
+# Run only controller tests
+go test -v ./controllers
+
+# Run tests matching a pattern
+go test -v -run "TestGetPost" ./controllers
+
+# Run tests with race detection
+go test -race ./...
 ```

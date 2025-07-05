@@ -75,6 +75,12 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Install swag
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+
+      - name: Generate swagger docs
+        run: swag init --generalInfo cmd/main.go --output docs
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:

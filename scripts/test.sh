@@ -6,6 +6,9 @@ set -e
 echo "🔧 Installing dependencies..."
 go mod download
 
+echo "🎨 Formatting code..."
+gofumpt -w .
+
 echo "📚 Generating swagger docs..."
 # Use the full path to swag since it's not in PATH
 SWAG_PATH=$(go env GOPATH)/bin/swag

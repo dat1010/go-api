@@ -26,3 +26,6 @@ go.work.sum
 .envrc
 
 /vendor
+
+# Generated swagger docs
+/docs

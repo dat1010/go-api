@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'      # triggers on main branch for releases
+      - 'feature/*' # triggers on feature branches for staging
   workflow_dispatch:
     inputs:
       branch:

@@ -62,7 +62,9 @@ func main() {
 	router.Use(middleware.CORS())
 
 	// Trust all proxies (for older Gin versions)
-	router.SetTrustedProxies(nil)
+	if err := router.SetTrustedProxies(nil); err != nil {
+		log.Printf("Warning: failed to set trusted proxies: %v", err)
+	}
 	router.ForwardedByClientIP = true
 	router.AppEngine = false
 

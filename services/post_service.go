@@ -13,7 +13,7 @@ type PostService interface {
 	CreatePost(req *models.CreatePostRequest, auth0UserID string) (*models.Post, error)
 	GetPost(id string) (*models.Post, error)
 	UpdatePost(id string, req *models.UpdatePostRequest, auth0UserID string) (*models.Post, error)
-	DeletePost(id string, auth0UserID string) error
+	DeletePost(id, auth0UserID string) error
 	ListPosts(published *bool, author *string) ([]models.Post, error)
 }
 
@@ -95,7 +95,7 @@ func (s *postService) UpdatePost(id string, req *models.UpdatePostRequest, auth0
 	return s.postRepo.GetByID(id)
 }
 
-func (s *postService) DeletePost(id string, auth0UserID string) error {
+func (s *postService) DeletePost(id, auth0UserID string) error {
 	// First, check if the post exists and belongs to the user
 	existingPost, err := s.postRepo.GetByID(id)
 	if err != nil {
@@ -113,20 +113,21 @@ func (s *postService) DeletePost(id string, auth0UserID string) error {
 }
 
 func (s *postService) ListPosts(published *bool, author *string) ([]models.Post, error) {
-	if published != nil && author != nil {
+	switch {
+	case published != nil && author != nil:
 		return s.postRepo.ListByAuthorAndPublished(*author, *published)
-	} else if published != nil {
+	case published != nil:
 		return s.postRepo.ListByPublished(*published)
-	} else if author != nil {
+	case author != nil:
 		return s.postRepo.ListByAuthor(*author)
-	} else {
+	default:
 		return s.postRepo.List()
 	}
 }
 
-// Helper function to generate a URL-friendly slug from a title
+// Helper function to generate a URL-friendly slug from a title.
 func generateSlug(title string) string {
-	// TODO: Implement proper slug generation
-	// For now, just return a simple slug
+	// TODO: Implement proper slug generation.
+	// For now, just return a simple slug.
 	return title
 }

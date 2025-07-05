@@ -9,7 +9,7 @@ type PostRepository interface {
 	Create(post *models.Post) error
 	GetByID(id string) (*models.Post, error)
 	Update(id string, updates map[string]interface{}) error
-	Delete(id string, auth0UserID string) error
+	Delete(id, auth0UserID string) error
 	List() ([]models.Post, error)
 	ListByAuthor(auth0UserID string) ([]models.Post, error)
 	ListByPublished(published bool) ([]models.Post, error)
@@ -54,7 +54,7 @@ func (r *postRepository) Update(id string, updates map[string]interface{}) error
 	return err
 }
 
-func (r *postRepository) Delete(id string, auth0UserID string) error {
+func (r *postRepository) Delete(id, auth0UserID string) error {
 	_, err := r.db.Exec("DELETE FROM posts WHERE id = ? AND auth0_user_id = ?", id, auth0UserID)
 	return err
 }

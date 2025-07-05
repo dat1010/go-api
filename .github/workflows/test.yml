@@ -81,6 +81,14 @@ jobs:
       - name: Generate swagger docs
         run: swag init --generalInfo cmd/main.go --output docs
 
+      - name: Check code formatting
+        run: |
+          go install mvdan.cc/gofumpt@latest
+          if [ "$(gofumpt -d .)" ]; then
+            echo "Code is not formatted. Run 'gofumpt -w .' to fix."
+            exit 1
+          fi
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:

@@ -11,8 +11,10 @@ type Health struct {
 	Version string `json:"version"`
 }
 
-var version = os.Getenv("VERSION")
-var healthCheckData = Health{Version: version}
+var (
+	version         = os.Getenv("VERSION")
+	healthCheckData = Health{Version: version}
+)
 
 // GetHealthCheck godoc
 // @Summary      Health Check

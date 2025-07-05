@@ -3,7 +3,6 @@ package controllers
 import (
 	"database/sql"
 	"net/http"
-	"time"
 
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/dat1010/go-api/models"
@@ -12,17 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
-
-type Post struct {
-	ID          string    `json:"id" db:"id"`
-	Title       string    `json:"title" db:"title"`
-	Content     string    `json:"content" db:"content"`
-	Auth0UserID string    `json:"auth0_user_id" db:"auth0_user_id"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
-	Published   bool      `json:"published" db:"published"`
-	Slug        string    `json:"slug" db:"slug"`
-}
 
 type CreatePostRequest struct {
 	Title     string `json:"title" binding:"required"`
@@ -50,7 +38,7 @@ func SetPostService(service services.PostService) {
 // @Produce json
 // @Param post body controllers.CreatePostRequest true "Post data"
 // @Security Bearer
-// @Success 201 {object} controllers.Post
+// @Success 201 {object} models.Post
 // @Failure 400 {object} object "Invalid request"
 // @Failure 401 {object} object "Unauthorized"
 // @Failure 500 {object} object "Internal server error"
@@ -82,16 +70,14 @@ func CreatePost(c *gin.Context) {
 // @Tags posts
 // @Produce json
 // @Param id path string true "Post ID"
-// @Success 200 {object} controllers.Post
+// @Success 200 {object} models.Post
 // @Failure 404 {object} object "Post not found"
 // @Failure 500 {object} object "Internal server error"
 // @Router /posts/{id} [get]
 func GetPost(c *gin.Context) {
 	id := c.Param("id")
-	var post Post
 
-	db := c.MustGet("db").(*sqlx.DB)
-	err := db.Get(&post, "SELECT * FROM posts WHERE id = ?", id)
+	post, err := postService.GetPost(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
@@ -112,7 +98,7 @@ func GetPost(c *gin.Context) {
 // @Param id path string true "Post ID"
 // @Param post body controllers.UpdatePostRequest true "Post data"
 // @Security Bearer
-// @Success 200 {object} controllers.Post
+// @Success 200 {object} models.Post
 // @Failure 400 {object} object "Invalid request"
 // @Failure 401 {object} object "Unauthorized"
 // @Failure 403 {object} object "Forbidden"
@@ -144,7 +130,7 @@ func UpdatePost(c *gin.Context) {
 	db := c.MustGet("db").(*sqlx.DB)
 
 	// First, check if the post exists and belongs to the user
-	var post Post
+	var post models.Post
 	err := db.Get(&post, "SELECT * FROM posts WHERE id = ?", id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -224,7 +210,7 @@ func DeletePost(c *gin.Context) {
 	db := c.MustGet("db").(*sqlx.DB)
 
 	// First, check if the post exists and belongs to the user
-	var post Post
+	var post models.Post
 	err := db.Get(&post, "SELECT * FROM posts WHERE id = ?", id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -268,7 +254,7 @@ func DeletePost(c *gin.Context) {
 // @Produce json
 // @Param published query bool false "Filter by published status"
 // @Param author query string false "Filter by author ID"
-// @Success 200 {array} controllers.Post
+// @Success 200 {array} models.Post
 // @Failure 500 {object} object "Internal server error"
 // @Router /posts [get]
 func ListPosts(c *gin.Context) {
@@ -276,7 +262,7 @@ func ListPosts(c *gin.Context) {
 	author := c.Query("author")
 
 	db := c.MustGet("db").(*sqlx.DB)
-	var posts []Post
+	var posts []models.Post
 	var err error
 
 	query := "SELECT * FROM posts WHERE 1=1"

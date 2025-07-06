@@ -10,12 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CreatePostRequest struct {
-	Title     string `json:"title" binding:"required"`
-	Content   string `json:"content" binding:"required"`
-	Published bool   `json:"published"`
-}
-
 var postService services.PostService // This should be set up in main.go or via DI
 
 // SetPostService sets the post service for the controllers
@@ -162,28 +156,19 @@ func DeletePost(c *gin.Context) {
 // @Description Get a list of posts with optional filtering. This is a public endpoint and does not require authentication.
 // @Tags posts
 // @Produce json
-// @Param published query bool false "Filter by published status"
 // @Param author query string false "Filter by author ID"
 // @Success 200 {array} models.Post
 // @Failure 500 {object} object "Internal server error"
 // @Router /posts [get]
 func ListPosts(c *gin.Context) {
-	published := c.Query("published")
 	author := c.Query("author")
 
-	var publishedFilter *bool
 	var authorFilter *string
-
-	if published != "" {
-		publishedBool := published == "true"
-		publishedFilter = &publishedBool
-	}
-
 	if author != "" {
 		authorFilter = &author
 	}
 
-	posts, err := postService.ListPosts(publishedFilter, authorFilter)
+	posts, err := postService.ListPosts(authorFilter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

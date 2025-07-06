@@ -1,7 +1,7 @@
 # go‑api
 
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/dat1010/go-api?utm_source=oss&utm_medium=github&utm_campaign=dat1010%2Fgo-api&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
-![Test Coverage](https://img.shields.io/codecov/c/github/dat1010/go-api?token=CODECOV_TOKEN)
+![Test Coverage](https://img.shields.io/codecov/c/github/dat1010/go-api)
 ![Go Version](https://img.shields.io/github/go-mod/go-version/dat1010/go-api)
 ![License](https://img.shields.io/github/license/dat1010/go-api)
 
@@ -89,9 +89,9 @@ Test coverage is automatically calculated and uploaded to [Codecov](https://code
 2. Add your repository to Codecov
 3. Get your repository token from Codecov
 4. Add the token as a GitHub secret named `CODECOV_TOKEN`
-5. Update the badge URL in this README with your actual token
+5. The badge will automatically update with your current coverage percentage
 
-The badge will automatically update with your current coverage percentage.
+**Note**: The badge URL uses a placeholder token that Codecov will automatically replace with your actual token when you set up the integration.
 
 ### Running Specific Tests
 

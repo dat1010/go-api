@@ -22,7 +22,7 @@ func SetPostService(service services.PostService) {
 // @Tags posts
 // @Accept json
 // @Produce json
-// @Param post body controllers.CreatePostRequest true "Post data"
+// @Param post body models.CreatePostRequest true "Post data"
 // @Security Bearer
 // @Success 201 {object} models.Post
 // @Failure 400 {object} object "Invalid request"

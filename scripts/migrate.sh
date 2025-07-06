@@ -24,7 +24,7 @@ run_migration() {
     echo "Checking if migration $migration_name has been applied..."
     
     # Check if migration has already been applied
-    if turso db shell --url "$TURSO_DATABASE_URL" -c "SELECT 1 FROM migrations WHERE name = '$migration_name' LIMIT 1;" 2>/dev/null | grep -q 1; then
+    if turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" -c "SELECT 1 FROM migrations WHERE name = '$migration_name' LIMIT 1;" 2>/dev/null | grep -q 1; then
         echo "Migration $migration_name already applied, skipping..."
         return 0
     fi
@@ -32,17 +32,17 @@ run_migration() {
     echo "Applying migration: $migration_name"
     
     # Apply the migration
-    turso db shell --url "$TURSO_DATABASE_URL" < "$migration_file"
+    turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" < "$migration_file"
     
     # Record the migration as applied
-    turso db shell --url "$TURSO_DATABASE_URL" -c "INSERT INTO migrations (name, applied_at) VALUES ('$migration_name', datetime('now'));"
+    turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" -c "INSERT INTO migrations (name, applied_at) VALUES ('$migration_name', datetime('now'));"
     
     echo "Migration $migration_name applied successfully"
 }
 
 # Create migrations table if it doesn't exist
 echo "Ensuring migrations table exists..."
-turso db shell --url "$TURSO_DATABASE_URL" -c "
+turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" -c "
 CREATE TABLE IF NOT EXISTS migrations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,

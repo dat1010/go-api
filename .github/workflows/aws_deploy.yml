@@ -157,9 +157,12 @@ jobs:
           curl -sSfL https://get.tur.so/install.sh | bash
           export PATH="$HOME/.turso:$PATH"
           
+          # Authenticate with Turso using token
+          echo "$TURSO_AUTH_TOKEN" | turso auth token --stdin
+          
           # Run migrations using Turso CLI
           echo "Running migration: 002_remove_published_field.sql"
-          turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" < migrations/002_remove_published_field.sql
+          turso db shell --url "$TURSO_DATABASE_URL" < migrations/002_remove_published_field.sql
           
           echo "Migrations completed successfully"
 

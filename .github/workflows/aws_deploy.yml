@@ -92,27 +92,25 @@ jobs:
       - name: Set version
         id: set_version
         run: |
+          # Get the latest version tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+          # Strip the 'v' prefix and split into major, minor, patch
+          LATEST_CLEAN=${LATEST_TAG#v}
+          VERSION_PARTS=(${LATEST_CLEAN//./ })
+          MAJOR=${VERSION_PARTS[0]:-0}
+          MINOR=${VERSION_PARTS[1]:-0}
+          PATCH=${VERSION_PARTS[2]:-0}
+
           if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
-            # Get the latest version tag
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-
-            # Strip the 'v' prefix and split into major, minor, patch
-            LATEST_CLEAN=${LATEST_TAG#v}
-            VERSION_PARTS=(${LATEST_CLEAN//./ })
-            MAJOR=${VERSION_PARTS[0]:-0}
-            MINOR=${VERSION_PARTS[1]:-0}
-            PATCH=${VERSION_PARTS[2]:-0}
-
-            # Increment patch version
+            # For main branch, increment patch version
             PATCH=$((PATCH + 1))
-
-            # Construct new version
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
           else
-            # For feature branches, use branch name and commit hash
+            # For feature branches, append branch name and commit hash to current version
             BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')
             COMMIT_HASH=$(git rev-parse --short HEAD)
-            VERSION="${BRANCH_NAME}-${COMMIT_HASH}"
+            VERSION="${MAJOR}.${MINOR}.${PATCH}-${BRANCH_NAME}-${COMMIT_HASH}"
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "New version: $VERSION"

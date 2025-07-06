@@ -20,7 +20,7 @@ type mockPostService struct {
 	GetPostFunc    func(id string) (*models.Post, error)
 	UpdatePostFunc func(id string, req *models.UpdatePostRequest, auth0UserID string) (*models.Post, error)
 	DeletePostFunc func(id, auth0UserID string) error
-	ListPostsFunc  func(published *bool, author *string) ([]models.Post, error)
+	ListPostsFunc  func(author *string) ([]models.Post, error)
 }
 
 func (m *mockPostService) CreatePost(req *models.CreatePostRequest, auth0UserID string) (*models.Post, error) {
@@ -46,9 +46,9 @@ func (m *mockPostService) DeletePost(id, auth0UserID string) error {
 	}
 	return nil
 }
-func (m *mockPostService) ListPosts(published *bool, author *string) ([]models.Post, error) {
+func (m *mockPostService) ListPosts(author *string) ([]models.Post, error) {
 	if m.ListPostsFunc != nil {
-		return m.ListPostsFunc(published, author)
+		return m.ListPostsFunc(author)
 	}
 	return nil, nil
 }
@@ -62,7 +62,6 @@ func TestCreatePost_Success(t *testing.T) {
 				Title:       req.Title,
 				Content:     req.Content,
 				Auth0UserID: auth0UserID,
-				Published:   req.Published,
 				Slug:        "test-slug",
 			}, nil
 		},
@@ -78,9 +77,8 @@ func TestCreatePost_Success(t *testing.T) {
 	})
 
 	body := models.CreatePostRequest{
-		Title:     "Test Title",
-		Content:   "Test Content",
-		Published: true,
+		Title:   "Test Title",
+		Content: "Test Content",
 	}
 	jsonBody, _ := json.Marshal(body)
 	w := httptest.NewRecorder()
@@ -95,7 +93,6 @@ func TestCreatePost_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Test Title", resp.Title)
 	assert.Equal(t, "Test Content", resp.Content)
-	assert.Equal(t, true, resp.Published)
 	assert.Equal(t, "auth0|testuser", resp.Auth0UserID)
 }
 
@@ -107,7 +104,6 @@ func TestGetPost_Success(t *testing.T) {
 		Title:       "Test Post",
 		Content:     "Test Content",
 		Auth0UserID: "auth0|testuser",
-		Published:   true,
 		Slug:        "test-post",
 	}
 
@@ -136,7 +132,6 @@ func TestGetPost_Success(t *testing.T) {
 	assert.Equal(t, expectedPost.Title, resp.Title)
 	assert.Equal(t, expectedPost.Content, resp.Content)
 	assert.Equal(t, expectedPost.Auth0UserID, resp.Auth0UserID)
-	assert.Equal(t, expectedPost.Published, resp.Published)
 	assert.Equal(t, expectedPost.Slug, resp.Slug)
 }
 
@@ -202,7 +197,6 @@ func TestUpdatePost_Success(t *testing.T) {
 		Title:       "Updated Title",
 		Content:     "Updated Content",
 		Auth0UserID: "auth0|testuser",
-		Published:   true,
 		Slug:        "updated-title",
 	}
 
@@ -241,7 +235,6 @@ func TestUpdatePost_Success(t *testing.T) {
 	assert.Equal(t, expectedPost.Title, resp.Title)
 	assert.Equal(t, expectedPost.Content, resp.Content)
 	assert.Equal(t, expectedPost.Auth0UserID, resp.Auth0UserID)
-	assert.Equal(t, expectedPost.Published, resp.Published)
 }
 
 func TestUpdatePost_NotFound(t *testing.T) {
@@ -412,7 +405,6 @@ func TestListPosts_Success(t *testing.T) {
 			Title:       "First Post",
 			Content:     "First content",
 			Auth0UserID: "auth0|user1",
-			Published:   true,
 			Slug:        "first-post",
 		},
 		{
@@ -420,13 +412,12 @@ func TestListPosts_Success(t *testing.T) {
 			Title:       "Second Post",
 			Content:     "Second content",
 			Auth0UserID: "auth0|user2",
-			Published:   false,
 			Slug:        "second-post",
 		},
 	}
 
 	mockService := &mockPostService{
-		ListPostsFunc: func(published *bool, author *string) ([]models.Post, error) {
+		ListPostsFunc: func(author *string) ([]models.Post, error) {
 			return expectedPosts, nil
 		},
 	}
@@ -451,48 +442,6 @@ func TestListPosts_Success(t *testing.T) {
 	assert.Equal(t, expectedPosts[1].ID, resp[1].ID)
 }
 
-func TestListPosts_WithPublishedFilter(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	expectedPosts := []models.Post{
-		{
-			ID:          "post-1",
-			Title:       "Published Post",
-			Content:     "Published content",
-			Auth0UserID: "auth0|user1",
-			Published:   true,
-			Slug:        "published-post",
-		},
-	}
-
-	mockService := &mockPostService{
-		ListPostsFunc: func(published *bool, author *string) ([]models.Post, error) {
-			if published != nil && *published {
-				return expectedPosts, nil
-			}
-			return []models.Post{}, nil
-		},
-	}
-
-	// Set the mock service
-	postService = mockService
-
-	r := gin.Default()
-	r.GET("/posts", ListPosts)
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/posts?published=true", http.NoBody)
-
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	var resp []models.Post
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.NoError(t, err)
-	assert.Len(t, resp, 1)
-	assert.Equal(t, expectedPosts[0].ID, resp[0].ID)
-}
-
 func TestListPosts_WithAuthorFilter(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -502,13 +451,12 @@ func TestListPosts_WithAuthorFilter(t *testing.T) {
 			Title:       "User's Post",
 			Content:     "User's content",
 			Auth0UserID: "auth0|specificuser",
-			Published:   true,
 			Slug:        "users-post",
 		},
 	}
 
 	mockService := &mockPostService{
-		ListPostsFunc: func(published *bool, author *string) ([]models.Post, error) {
+		ListPostsFunc: func(author *string) ([]models.Post, error) {
 			if author != nil && *author == "auth0|specificuser" {
 				return expectedPosts, nil
 			}
@@ -539,7 +487,7 @@ func TestListPosts_InternalServerError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	mockService := &mockPostService{
-		ListPostsFunc: func(published *bool, author *string) ([]models.Post, error) {
+		ListPostsFunc: func(author *string) ([]models.Post, error) {
 			return nil, errors.New("database connection failed")
 		},
 	}

@@ -11,18 +11,15 @@ type Post struct {
 	Auth0UserID string    `json:"auth0_user_id" db:"auth0_user_id"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
-	Published   bool      `json:"published" db:"published"`
 	Slug        string    `json:"slug" db:"slug"`
 }
 
 type CreatePostRequest struct {
-	Title     string `json:"title" binding:"required"`
-	Content   string `json:"content" binding:"required"`
-	Published bool   `json:"published"`
+	Title   string `json:"title" binding:"required"`
+	Content string `json:"content" binding:"required"`
 }
 
 type UpdatePostRequest struct {
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	Published *bool  `json:"published"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }

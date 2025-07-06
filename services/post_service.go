@@ -14,7 +14,7 @@ type PostService interface {
 	GetPost(id string) (*models.Post, error)
 	UpdatePost(id string, req *models.UpdatePostRequest, auth0UserID string) (*models.Post, error)
 	DeletePost(id, auth0UserID string) error
-	ListPosts(published *bool, author *string) ([]models.Post, error)
+	ListPosts(author *string) ([]models.Post, error)
 }
 
 type postService struct {
@@ -31,7 +31,6 @@ func (s *postService) CreatePost(req *models.CreatePostRequest, auth0UserID stri
 		Title:       req.Title,
 		Content:     req.Content,
 		Auth0UserID: auth0UserID,
-		Published:   req.Published,
 		Slug:        generateSlug(req.Title),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -81,9 +80,6 @@ func (s *postService) UpdatePost(id string, req *models.UpdatePostRequest, auth0
 	if req.Content != "" {
 		updates["content"] = req.Content
 	}
-	if req.Published != nil {
-		updates["published"] = *req.Published
-	}
 
 	// Update the post
 	err = s.postRepo.Update(id, updates)
@@ -112,17 +108,11 @@ func (s *postService) DeletePost(id, auth0UserID string) error {
 	return s.postRepo.Delete(id, auth0UserID)
 }
 
-func (s *postService) ListPosts(published *bool, author *string) ([]models.Post, error) {
-	switch {
-	case published != nil && author != nil:
-		return s.postRepo.ListByAuthorAndPublished(*author, *published)
-	case published != nil:
-		return s.postRepo.ListByPublished(*published)
-	case author != nil:
+func (s *postService) ListPosts(author *string) ([]models.Post, error) {
+	if author != nil {
 		return s.postRepo.ListByAuthor(*author)
-	default:
-		return s.postRepo.List()
 	}
+	return s.postRepo.List()
 }
 
 // Helper function to generate a URL-friendly slug from a title.

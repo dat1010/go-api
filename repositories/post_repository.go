@@ -12,8 +12,6 @@ type PostRepository interface {
 	Delete(id, auth0UserID string) error
 	List() ([]models.Post, error)
 	ListByAuthor(auth0UserID string) ([]models.Post, error)
-	ListByPublished(published bool) ([]models.Post, error)
-	ListByAuthorAndPublished(auth0UserID string, published bool) ([]models.Post, error)
 }
 
 type postRepository struct {
@@ -25,8 +23,8 @@ func NewPostRepository(db *sqlx.DB) PostRepository {
 }
 
 func (r *postRepository) Create(post *models.Post) error {
-	query := `INSERT INTO posts (id, title, content, auth0_user_id, created_at, updated_at, published, slug)
-			  VALUES (:id, :title, :content, :auth0_user_id, :created_at, :updated_at, :published, :slug)`
+	query := `INSERT INTO posts (id, title, content, auth0_user_id, created_at, updated_at, slug)
+			  VALUES (:id, :title, :content, :auth0_user_id, :created_at, :updated_at, :slug)`
 
 	_, err := r.db.NamedExec(query, post)
 	return err
@@ -45,7 +43,6 @@ func (r *postRepository) Update(id string, updates map[string]interface{}) error
 	query := `UPDATE posts SET 
 		title = COALESCE(:title, title),
 		content = COALESCE(:content, content),
-		published = COALESCE(:published, published),
 		updated_at = CURRENT_TIMESTAMP
 		WHERE id = :id AND auth0_user_id = :auth0_user_id`
 
@@ -68,17 +65,5 @@ func (r *postRepository) List() ([]models.Post, error) {
 func (r *postRepository) ListByAuthor(auth0UserID string) ([]models.Post, error) {
 	var posts []models.Post
 	err := r.db.Select(&posts, "SELECT * FROM posts WHERE auth0_user_id = ? ORDER BY created_at DESC", auth0UserID)
-	return posts, err
-}
-
-func (r *postRepository) ListByPublished(published bool) ([]models.Post, error) {
-	var posts []models.Post
-	err := r.db.Select(&posts, "SELECT * FROM posts WHERE published = ? ORDER BY created_at DESC", published)
-	return posts, err
-}
-
-func (r *postRepository) ListByAuthorAndPublished(auth0UserID string, published bool) ([]models.Post, error) {
-	var posts []models.Post
-	err := r.db.Select(&posts, "SELECT * FROM posts WHERE auth0_user_id = ? AND published = ? ORDER BY created_at DESC", auth0UserID, published)
 	return posts, err
 }

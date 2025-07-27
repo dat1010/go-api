@@ -7,12 +7,15 @@ set -e  # Exit on any error
 
 # Turso connection parameters
 TURSO_DATABASE_URL="${TURSO_DATABASE_URL}"
-TURSO_AUTH_TOKEN="${TURSO_AUTH_TOKEN}"
 
-if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
-    echo "Error: TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be set"
+if [ -z "$TURSO_DATABASE_URL" ]; then
+    echo "Error: TURSO_DATABASE_URL must be set"
     exit 1
 fi
+
+# Extract database name from URL
+DATABASE_NAME=$(echo "$TURSO_DATABASE_URL" | sed 's|libsql://||' | sed 's|-dat1010\..*||')
+echo "Using database: $DATABASE_NAME"
 
 echo "Starting Turso database migrations..."
 
@@ -24,7 +27,7 @@ run_migration() {
     echo "Checking if migration $migration_name has been applied..."
     
     # Check if migration has already been applied
-    if turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" -c "SELECT 1 FROM migrations WHERE name = '$migration_name' LIMIT 1;" 2>/dev/null | grep -q 1; then
+    if turso db shell "$DATABASE_NAME" -c "SELECT 1 FROM migrations WHERE name = '$migration_name' LIMIT 1;" 2>/dev/null | grep -q 1; then
         echo "Migration $migration_name already applied, skipping..."
         return 0
     fi
@@ -32,17 +35,17 @@ run_migration() {
     echo "Applying migration: $migration_name"
     
     # Apply the migration
-    turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" < "$migration_file"
+    turso db shell "$DATABASE_NAME" < "$migration_file"
     
     # Record the migration as applied
-    turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" -c "INSERT INTO migrations (name, applied_at) VALUES ('$migration_name', datetime('now'));"
+    turso db shell "$DATABASE_NAME" -c "INSERT INTO migrations (name, applied_at) VALUES ('$migration_name', datetime('now'));"
     
     echo "Migration $migration_name applied successfully"
 }
 
 # Create migrations table if it doesn't exist
 echo "Ensuring migrations table exists..."
-turso db shell --url "$TURSO_DATABASE_URL" --auth-token "$TURSO_AUTH_TOKEN" -c "
+turso db shell "$DATABASE_NAME" -c "
 CREATE TABLE IF NOT EXISTS migrations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,

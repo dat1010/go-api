@@ -32,7 +32,7 @@ func (r *postRepository) Create(post *models.Post) error {
 
 func (r *postRepository) GetByID(id string) (*models.Post, error) {
 	var post models.Post
-	err := r.db.Get(&post, "SELECT * FROM posts WHERE id = ?", id)
+	err := r.db.Get(&post, "SELECT id, title, content, auth0_user_id, created_at, updated_at, slug FROM posts WHERE id = ?", id)
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +58,12 @@ func (r *postRepository) Delete(id, auth0UserID string) error {
 
 func (r *postRepository) List() ([]models.Post, error) {
 	var posts []models.Post
-	err := r.db.Select(&posts, "SELECT * FROM posts ORDER BY created_at DESC")
+	err := r.db.Select(&posts, "SELECT id, title, content, auth0_user_id, created_at, updated_at, slug FROM posts ORDER BY created_at DESC")
 	return posts, err
 }
 
 func (r *postRepository) ListByAuthor(auth0UserID string) ([]models.Post, error) {
 	var posts []models.Post
-	err := r.db.Select(&posts, "SELECT * FROM posts WHERE auth0_user_id = ? ORDER BY created_at DESC", auth0UserID)
+	err := r.db.Select(&posts, "SELECT id, title, content, auth0_user_id, created_at, updated_at, slug FROM posts WHERE auth0_user_id = ? ORDER BY created_at DESC", auth0UserID)
 	return posts, err
 }

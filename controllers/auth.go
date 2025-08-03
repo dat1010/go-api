@@ -60,6 +60,7 @@ func Callback(c *gin.Context) {
 	if scheme == "" {
 		scheme = "https"
 	}
+	// test redeploy comment
 
 	tokenURL := scheme + "://" + domain + "/oauth/token"
 

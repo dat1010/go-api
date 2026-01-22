@@ -31,7 +31,10 @@ type DiscordPingResponse struct {
 // @Failure      500  {object}  map[string]string
 // @Router       /api/discord-ping [get]
 func PingDiscord(c *gin.Context) {
-	message := fmt.Sprintf("API ping for Discord user tannerd at %s", time.Now().UTC().Format(time.RFC3339))
+	message := fmt.Sprintf(
+		"Someone is pinging you, they have questions at your presentation table. @tannerd (sent at %s)",
+		time.Now().UTC().Format(time.RFC3339),
+	)
 
 	payload := discordWebhookPayload{Content: message}
 	body, err := json.Marshal(payload)

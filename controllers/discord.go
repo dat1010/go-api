@@ -32,7 +32,7 @@ type DiscordPingResponse struct {
 // @Router       /api/discord-ping [get]
 func PingDiscord(c *gin.Context) {
 	message := fmt.Sprintf(
-		"Someone is pinging you, they have questions at your presentation table. @tannerd (sent at %s)",
+		"Someone is pinging you, they have questions at your presentation table. <@363894880919093259> (sent at %s)",
 		time.Now().UTC().Format(time.RFC3339),
 	)
 
@@ -63,8 +63,24 @@ func PingDiscord(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, DiscordPingResponse{
-		Message:       "Discord ping sent for user tannerd",
-		DiscordStatus: resp.Status,
-	})
+	html := `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ping Sent</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7f7f7; color: #222; padding: 40px; }
+    .card { max-width: 420px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    h1 { margin-top: 0; font-size: 22px; }
+    p { margin: 12px 0 0; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Ping Sent</h1>
+    <p>Dave has been pinged and will be there shortly.</p>
+  </div>
+</body>
+</html>`
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
 }

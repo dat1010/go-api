@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const discordWebhookURL = "https://discord.com/api/webhooks/1463686090308456660/a_OjI80L-0Od2CPIEll_ECnvsGkENtBeDCAOEuBBkEA3C1nkpqyYWGu73lEIPpZGVtfR"
+const discordWebhookURL = ""
 
 type discordWebhookPayload struct {
 	Content string `json:"content"`
@@ -32,7 +32,7 @@ type DiscordPingResponse struct {
 // @Router       /api/discord-ping [get]
 func PingDiscord(c *gin.Context) {
 	message := fmt.Sprintf(
-		"Someone is pinging you, they have questions at your presentation table. <@363894880919093259> (sent at %s)",
+		"This feature is no longer aftive (sent at %s)",
 		time.Now().UTC().Format(time.RFC3339),
 	)
 

@@ -9,7 +9,7 @@ This will be a simple API written in Golang. Mostly just trying to learn golang 
 
 Not sure what the direction of this api will be. starting simple with a /api/healthcheck at frist and growing from there.
 
-The plan is to also use sqlite and deploy to AWS ECS.
+The plan is to use Aurora PostgreSQL on AWS ECS.
 
 
 Lets get started.

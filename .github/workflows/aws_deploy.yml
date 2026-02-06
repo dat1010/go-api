@@ -144,6 +144,7 @@ jobs:
           CLUSTER: GoApiInfraStack-GoApiClusterD2A0AA60-CFXrINUBRSky
           SERVICE: GoApiInfraStack-GoApiFargateService7D208A3F-R1XncDM5OMTl
           SECRET_ARN: arn:aws:secretsmanager:us-east-1:069597727371:secret:staging/go-api-3V2g50
+          DB_SECRET_ARN: ${{ secrets.DB_SECRET_ARN }}
         run: |
           chmod +x ./.github/scripts/update_ecs.sh
           ./.github/scripts/update_ecs.sh
@@ -159,4 +160,3 @@ jobs:
           git push origin "v${{ env.VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

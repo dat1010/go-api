@@ -18,10 +18,12 @@ echo "$TASK_DEFINITION_JSON" | jq -r '.containerDefinitions'
 NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/go-api:$VERSION" \
   --arg VERSION "$VERSION" \
   --arg SECRET_ARN "$SECRET_ARN" \
+  --arg DB_SECRET_ARN "$DB_SECRET_ARN" \
   '.containerDefinitions[0].image = $IMAGE
   | .containerDefinitions[0].environment += [
       { "name": "VERSION", "value": $VERSION },
-      { "name": "USE_HTTPS", "value": "true" }
+      { "name": "USE_HTTPS", "value": "true" },
+      { "name": "DB_SECRET_ARN", "value": $DB_SECRET_ARN }
     ]
   | .containerDefinitions[0].secrets = [
       { "name": "MY_LITTLE_SECRET",   "valueFrom": "\($SECRET_ARN):my_little_secret::" },

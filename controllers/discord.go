@@ -32,14 +32,14 @@ type DiscordPingResponse struct {
 // @Router       /api/discord-ping [get]
 func PingDiscord(c *gin.Context) {
 	message := fmt.Sprintf(
-		"This feature is no longer aftive (sent at %s)",
+		"This feature is no longer active (sent at %s)",
 		time.Now().UTC().Format(time.RFC3339),
 	)
 
 	payload := discordWebhookPayload{Content: message}
 	body, err := json.Marshal(payload)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal Discord payload"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal discord payload"})
 		return
 	}
 

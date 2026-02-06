@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -35,33 +33,6 @@ func PingDiscord(c *gin.Context) {
 		"This feature is no longer active (sent at %s)",
 		time.Now().UTC().Format(time.RFC3339),
 	)
-
-	payload := discordWebhookPayload{Content: message}
-	body, err := json.Marshal(payload)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal discord payload"})
-		return
-	}
-
-	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodPost, discordWebhookURL, bytes.NewBuffer(body))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create Discord request"})
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to send Discord webhook: %v", err)})
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Discord webhook returned status %s", resp.Status)})
-		return
-	}
 
 	html := `<!doctype html>
 <html lang="en">

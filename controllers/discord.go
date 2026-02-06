@@ -1,9 +1,7 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,11 +27,6 @@ type DiscordPingResponse struct {
 // @Failure      500  {object}  map[string]string
 // @Router       /api/discord-ping [get]
 func PingDiscord(c *gin.Context) {
-	message := fmt.Sprintf(
-		"This feature is no longer active (sent at %s)",
-		time.Now().UTC().Format(time.RFC3339),
-	)
-
 	html := `<!doctype html>
 <html lang="en">
 <head>
@@ -49,7 +42,7 @@ func PingDiscord(c *gin.Context) {
 <body>
   <div class="card">
     <h1>Ping Sent</h1>
-    <p>Dave has been pinged and will be there shortly.</p>
+    <p>This feature is no longer available. Please use the <a href="https://github.com/tannerdolby/go-api">go-api</a> instead.</p>
   </div>
 </body>
 </html>`

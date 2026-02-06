@@ -4,27 +4,26 @@ go 1.23.0
 
 toolchain go1.24.1
 
-	require (
-		github.com/auth0/go-jwt-middleware/v2 v2.3.0
-		github.com/aws/aws-sdk-go-v2 v1.36.3
-		github.com/aws/aws-sdk-go-v2/config v1.29.14
-		github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.5
-		github.com/aws/aws-sdk-go-v2/service/eventbridge v1.39.0
-		github.com/gin-contrib/cors v1.7.5
-		github.com/gin-gonic/gin v1.10.0
-		github.com/golang-migrate/migrate/v4 v4.17.1
-		github.com/google/uuid v1.6.0
-		github.com/jackc/pgx/v5 v5.6.0
-		github.com/jmoiron/sqlx v1.4.0
-		github.com/stretchr/testify v1.10.0
-		github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
-		github.com/swaggo/gin-swagger v1.5.3
-		github.com/swaggo/swag v1.16.1
-	)
+require (
+	github.com/auth0/go-jwt-middleware/v2 v2.3.0
+	github.com/aws/aws-sdk-go-v2 v1.36.3
+	github.com/aws/aws-sdk-go-v2/config v1.29.14
+	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.39.0
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.5
+	github.com/gin-contrib/cors v1.7.5
+	github.com/gin-gonic/gin v1.10.0
+	github.com/golang-migrate/migrate/v4 v4.17.1
+	github.com/google/uuid v1.6.0
+	github.com/jackc/pgx/v5 v5.6.0
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/stretchr/testify v1.10.0
+	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
+	github.com/swaggo/gin-swagger v1.5.3
+	github.com/swaggo/swag v1.16.1
+)
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.67 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34 // indirect
@@ -40,7 +39,6 @@ require (
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/coder/websocket v1.8.12 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
@@ -52,6 +50,12 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.26.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
@@ -65,9 +69,9 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/arch v0.16.0 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
-	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect

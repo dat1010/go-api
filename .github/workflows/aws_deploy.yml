@@ -137,6 +137,20 @@ jobs:
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:${{ env.VERSION }}
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/go-api:latest
 
+      - name: Run Turso data migration (one-off)
+        if: ${{ vars.RUN_TURSO_MIGRATION == 'true' }}
+        env:
+          CLUSTER: GoApiInfraStack-GoApiClusterD2A0AA60-CFXrINUBRSky
+          SERVICE: GoApiInfraStack-GoApiFargateService7D208A3F-R1XncDM5OMTl
+          TASK_DEFINITION: GoApiInfraStackGoApiFargateServiceTaskDef1BE268E8
+          DB_SECRET_ARN: ${{ secrets.DB_SECRET_ARN }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          PG_DSN: ${{ secrets.PG_DSN }}
+        run: |
+          chmod +x ./.github/scripts/run_turso_migration_task.sh
+          ./.github/scripts/run_turso_migration_task.sh
+
       - name: Update ECS Service
         env:
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}

@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -14,10 +16,16 @@ import (
 )
 
 func RunMigrations() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	timeout := migrationTimeout()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	dsn, err := buildPostgresDSN(ctx)
+	if err != nil {
+		return err
+	}
+
+	dsn, err = withStatementTimeout(dsn, timeout)
 	if err != nil {
 		return err
 	}
@@ -27,6 +35,10 @@ func RunMigrations() error {
 		return fmt.Errorf("failed to open postgres for migrations: %w", err)
 	}
 	defer db.Close()
+
+	if err := db.PingContext(ctx); err != nil {
+		return fmt.Errorf("failed to ping postgres for migrations: %w", err)
+	}
 
 	driver, err := pgx.WithInstance(db, &pgx.Config{})
 	if err != nil {
@@ -58,4 +70,31 @@ func migrationSourceURL() (string, error) {
 
 	migrationsPath := filepath.Join(wd, "migrations")
 	return "file://" + filepath.ToSlash(migrationsPath), nil
+}
+
+func migrationTimeout() time.Duration {
+	const defaultTimeout = 30 * time.Second
+	raw := os.Getenv("MIGRATION_TIMEOUT_MS")
+	if raw == "" {
+		return defaultTimeout
+	}
+
+	value, err := strconv.Atoi(raw)
+	if err != nil || value <= 0 {
+		return defaultTimeout
+	}
+
+	return time.Duration(value) * time.Millisecond
+}
+
+func withStatementTimeout(dsn string, timeout time.Duration) (string, error) {
+	parsed, err := url.Parse(dsn)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse db dsn: %w", err)
+	}
+
+	query := parsed.Query()
+	query.Set("options", fmt.Sprintf("-c statement_timeout=%d", timeout.Milliseconds()))
+	parsed.RawQuery = query.Encode()
+	return parsed.String(), nil
 }

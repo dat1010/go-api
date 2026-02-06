@@ -34,6 +34,8 @@ RUN mkdir -p /etc/ssl/certs /etc/ssl/private
 COPY --from=build /app/main .
 # Copy the generated docs folder to serve Swagger documentation
 COPY --from=build /app/docs ./docs
+# Copy migrations so runtime migration runner can find them
+COPY --from=build /app/migrations ./migrations
 
 # Expose the port your Gin app listens on
 EXPOSE 8080

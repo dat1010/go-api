@@ -63,6 +63,17 @@ func RunMigrations() error {
 }
 
 func migrationSourceURL() (string, error) {
+	if customPath := os.Getenv("MIGRATIONS_PATH"); customPath != "" {
+		return "file://" + filepath.ToSlash(customPath), nil
+	}
+
+	exePath, err := os.Executable()
+	if err == nil {
+		baseDir := filepath.Dir(exePath)
+		migrationsPath := filepath.Join(baseDir, "migrations")
+		return "file://" + filepath.ToSlash(migrationsPath), nil
+	}
+
 	wd, err := os.Getwd()
 	if err != nil {
 		return "", fmt.Errorf("failed to get working directory: %w", err)

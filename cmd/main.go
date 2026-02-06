@@ -42,6 +42,10 @@ import (
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.
 func main() {
+	if err := config.RunMigrations(); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
 	// Initialize database connection
 	db, err := config.NewDB()
 	if err != nil {

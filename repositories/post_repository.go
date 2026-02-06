@@ -32,7 +32,7 @@ func (r *postRepository) Create(post *models.Post) error {
 
 func (r *postRepository) GetByID(id string) (*models.Post, error) {
 	var post models.Post
-	err := r.db.Get(&post, "SELECT id, title, content, auth0_user_id, created_at, updated_at, slug FROM posts WHERE id = ?", id)
+	err := r.db.Get(&post, "SELECT id, title, content, auth0_user_id, created_at, updated_at, slug FROM posts WHERE id = $1", id)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (r *postRepository) Update(id string, updates map[string]interface{}) error
 }
 
 func (r *postRepository) Delete(id, auth0UserID string) error {
-	_, err := r.db.Exec("DELETE FROM posts WHERE id = ? AND auth0_user_id = ?", id, auth0UserID)
+	_, err := r.db.Exec("DELETE FROM posts WHERE id = $1 AND auth0_user_id = $2", id, auth0UserID)
 	return err
 }
 
@@ -64,6 +64,6 @@ func (r *postRepository) List() ([]models.Post, error) {
 
 func (r *postRepository) ListByAuthor(auth0UserID string) ([]models.Post, error) {
 	var posts []models.Post
-	err := r.db.Select(&posts, "SELECT id, title, content, auth0_user_id, created_at, updated_at, slug FROM posts WHERE auth0_user_id = ? ORDER BY created_at DESC", auth0UserID)
+	err := r.db.Select(&posts, "SELECT id, title, content, auth0_user_id, created_at, updated_at, slug FROM posts WHERE auth0_user_id = $1 ORDER BY created_at DESC", auth0UserID)
 	return posts, err
 }

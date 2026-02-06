@@ -4,21 +4,23 @@ go 1.23.0
 
 toolchain go1.24.1
 
-require (
-	github.com/auth0/go-jwt-middleware/v2 v2.3.0
-	github.com/aws/aws-sdk-go-v2 v1.36.3
-	github.com/aws/aws-sdk-go-v2/config v1.29.14
-	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.39.0
-	github.com/gin-contrib/cors v1.7.5
-	github.com/gin-gonic/gin v1.10.0
-	github.com/google/uuid v1.6.0
-	github.com/jmoiron/sqlx v1.4.0
-	github.com/stretchr/testify v1.10.0
-	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
-	github.com/swaggo/gin-swagger v1.5.3
-	github.com/swaggo/swag v1.16.1
-	github.com/tursodatabase/libsql-client-go v0.0.0-20240902231107-85af5b9d094d
-)
+	require (
+		github.com/auth0/go-jwt-middleware/v2 v2.3.0
+		github.com/aws/aws-sdk-go-v2 v1.36.3
+		github.com/aws/aws-sdk-go-v2/config v1.29.14
+		github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.5
+		github.com/aws/aws-sdk-go-v2/service/eventbridge v1.39.0
+		github.com/gin-contrib/cors v1.7.5
+		github.com/gin-gonic/gin v1.10.0
+		github.com/golang-migrate/migrate/v4 v4.17.1
+		github.com/google/uuid v1.6.0
+		github.com/jackc/pgx/v5 v5.6.0
+		github.com/jmoiron/sqlx v1.4.0
+		github.com/stretchr/testify v1.10.0
+		github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
+		github.com/swaggo/gin-swagger v1.5.3
+		github.com/swaggo/swag v1.16.1
+	)
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

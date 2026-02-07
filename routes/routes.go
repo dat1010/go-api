@@ -12,7 +12,7 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	api.GET("/login", controllers.Login)
 	api.GET("/callback", controllers.Callback)
 	api.GET("/logout", controllers.Logout)
-	api.GET("/me", controllers.CheckAuth)
+	api.POST("/refresh", controllers.Refresh)
 
 	// Public routes
 	api.GET("/healthcheck", controllers.GetHealthCheck)
@@ -22,6 +22,7 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	// Protected routes
 	protected := api.Group("")
 	protected.Use(middleware.Auth0())
+	protected.GET("/me", controllers.CheckAuth)
 	protected.POST("/events", controllers.CreateEvent)
 	protected.GET("/events", controllers.ListUserEvents)
 }

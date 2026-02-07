@@ -87,15 +87,15 @@ func Auth0() gin.HandlerFunc {
 			}
 		}
 
-		// If no Authorization header, check for id_token cookie
+		// If no Authorization header, check for access_token cookie
 		if token == "" {
-			if cookie, err := c.Cookie("id_token"); err == nil && cookie != "" {
+			if cookie, err := c.Cookie("access_token"); err == nil && cookie != "" {
 				token = cookie
 			}
 		}
 
 		if token == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header or id_token cookie is required"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header or access_token cookie is required"})
 			return
 		}
 

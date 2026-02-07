@@ -32,6 +32,11 @@ NEW_TASK_DEFINITION=$(echo "$TASK_DEFINITION_JSON" | jq --arg IMAGE "$AWS_ACCOUN
       { "name": "AUTH0_CLIENT_ID",    "valueFrom": "\($SECRET_ARN):AUTH0_CLIENT_ID::" },
       { "name": "AUTH0_CLIENT_SECRET","valueFrom": "\($SECRET_ARN):AUTH0_CLIENT_SECRET::" },
       { "name": "AUTH0_CALLBACK_URL", "valueFrom": "\($SECRET_ARN):AUTH0_CALLBACK_URL::" },
+      { "name": "AUTH0_LOGOUT_RETURN_URL", "valueFrom": "\($SECRET_ARN):AUTH0_LOGOUT_RETURN_URL::" },
+      { "name": "AUTH0_COOKIE_DOMAIN", "valueFrom": "\($SECRET_ARN):AUTH0_COOKIE_DOMAIN::" },
+      { "name": "AUTH0_COOKIE_SECURE", "valueFrom": "\($SECRET_ARN):AUTH0_COOKIE_SECURE::" },
+      { "name": "AUTH0_COOKIE_SAMESITE", "valueFrom": "\($SECRET_ARN):AUTH0_COOKIE_SAMESITE::" },
+      { "name": "AUTH0_SCHEME", "valueFrom": "\($SECRET_ARN):AUTH0_SCHEME::" },
       { "name": "LAMBDA_ARN",   "valueFrom": "\($SECRET_ARN):LAMBDA_ARN::" }
     ]')
 

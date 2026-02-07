@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
+	"github.com/dat1010/go-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,6 +19,43 @@ type TokenResponse struct {
 	RefreshToken string `json:"refresh_token,omitempty"`
 	ExpiresIn    int    `json:"expires_in"`
 	TokenType    string `json:"token_type"`
+}
+
+const (
+	accessTokenCookie  = "access_token"
+	refreshTokenCookie = "refresh_token"
+)
+
+func cookieDomain(c *gin.Context) string {
+	domain := strings.TrimSpace(os.Getenv("AUTH0_COOKIE_DOMAIN"))
+	if domain != "" {
+		return domain
+	}
+	return ""
+}
+
+func cookieSecure() bool {
+	secure := strings.TrimSpace(os.Getenv("AUTH0_COOKIE_SECURE"))
+	if secure == "" {
+		return true
+	}
+	return strings.EqualFold(secure, "true") || secure == "1"
+}
+
+func cookieSameSite(c *gin.Context) {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("AUTH0_COOKIE_SAMESITE"))) {
+	case "strict":
+		c.SetSameSite(http.SameSiteStrictMode)
+	case "none":
+		c.SetSameSite(http.SameSiteNoneMode)
+	default:
+		c.SetSameSite(http.SameSiteLaxMode)
+	}
+}
+
+func setTokenCookie(c *gin.Context, name, value string, maxAge int) {
+	cookieSameSite(c)
+	c.SetCookie(name, value, maxAge, "/", cookieDomain(c), cookieSecure(), true)
 }
 
 // @Summary Redirect to Auth0 login page
@@ -29,6 +68,7 @@ func Login(c *gin.Context) {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	clientID := os.Getenv("AUTH0_CLIENT_ID")
 	redirectURI := os.Getenv("AUTH0_CALLBACK_URL")
+	audience := os.Getenv("AUTH0_AUDIENCE")
 	// TODO: generate & verify a real state in production
 	state := "example-state"
 
@@ -36,8 +76,12 @@ func Login(c *gin.Context) {
 		"?response_type=code" +
 		"&client_id=" + clientID +
 		"&redirect_uri=" + redirectURI +
-		"&scope=openid%20profile%20email" +
+		"&scope=openid%20profile%20email%20offline_access" +
 		"&state=" + state
+
+	if audience != "" {
+		authURL += "&audience=" + audience
+	}
 
 	c.Redirect(http.StatusTemporaryRedirect, authURL)
 }
@@ -60,7 +104,10 @@ func Callback(c *gin.Context) {
 	if scheme == "" {
 		scheme = "https"
 	}
-	// test redeploy comment
+	if clientID == "" || clientSecret == "" || domain == "" || redirectURI == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "auth env vars not set"})
+		return
+	}
 
 	tokenURL := scheme + "://" + domain + "/oauth/token"
 
@@ -95,11 +142,17 @@ func Callback(c *gin.Context) {
 		return
 	}
 
-	// Set a cookie with the ID token (or access token, as needed)
-	// Secure, HttpOnly, and SameSite options are recommended for production
-	c.SetCookie(
-		"id_token", tr.IDToken,
-		tr.ExpiresIn, "/", "nofeed.zone", true, false)
+	if tr.AccessToken == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "missing access token"})
+		return
+	}
+
+	// Set cookies for access and refresh tokens (if provided)
+	setTokenCookie(c, accessTokenCookie, tr.AccessToken, tr.ExpiresIn)
+	if tr.RefreshToken != "" {
+		// Refresh tokens should generally be long-lived; let Auth0 control expiry server-side.
+		setTokenCookie(c, refreshTokenCookie, tr.RefreshToken, 60*60*24*30)
+	}
 
 	// Redirect to frontend
 	c.Redirect(http.StatusTemporaryRedirect, "https://nofeed.zone")
@@ -117,9 +170,8 @@ func Logout(c *gin.Context) {
 	returnTo := os.Getenv("AUTH0_LOGOUT_RETURN_URL")
 
 	// Clear the authentication cookie
-	c.SetCookie(
-		"id_token", "",
-		-1, "/", "nofeed.zone", true, true) // httpOnly=true
+	setTokenCookie(c, accessTokenCookie, "", -1)
+	setTokenCookie(c, refreshTokenCookie, "", -1)
 
 	// Validate required env vars
 	if domain == "" || clientID == "" || returnTo == "" {
@@ -145,19 +197,90 @@ func Logout(c *gin.Context) {
 // @Failure 401 {object} object "User is not authenticated"
 // @Router /api/me [get]
 func CheckAuth(c *gin.Context) {
-	// Check for id_token cookie
-	if cookie, err := c.Cookie("id_token"); err == nil && cookie != "" {
-		// Token exists, user is authenticated
-		c.JSON(http.StatusOK, gin.H{
-			"authenticated": true,
-			"message":       "User is authenticated",
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"authenticated": false,
+			"message":       "User is not authenticated",
 		})
 		return
 	}
 
-	// No valid cookie found
-	c.JSON(http.StatusUnauthorized, gin.H{
-		"authenticated": false,
-		"message":       "User is not authenticated",
+	c.JSON(http.StatusOK, gin.H{
+		"authenticated": true,
+		"user_id":       auth0UserID,
+		"message":       "User is authenticated",
 	})
+}
+
+// @Summary Refresh access token
+// @Description Exchange refresh token for a new access token
+// @Tags auth
+// @Produce json
+// @Success 200 {object} object "Token refreshed"
+// @Failure 401 {object} object "Missing refresh token"
+// @Failure 500 {object} object "Internal server error"
+// @Router /api/refresh [post]
+func Refresh(c *gin.Context) {
+	refreshToken, err := c.Cookie(refreshTokenCookie)
+	if err != nil || refreshToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing refresh token"})
+		return
+	}
+
+	domain := os.Getenv("AUTH0_DOMAIN")
+	clientID := os.Getenv("AUTH0_CLIENT_ID")
+	clientSecret := os.Getenv("AUTH0_CLIENT_SECRET")
+	scheme := os.Getenv("AUTH0_SCHEME")
+	if scheme == "" {
+		scheme = "https"
+	}
+	if clientID == "" || clientSecret == "" || domain == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "auth env vars not set"})
+		return
+	}
+
+	tokenURL := scheme + "://" + domain + "/oauth/token"
+	if _, err := url.Parse(tokenURL); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid token URL"})
+		return
+	}
+
+	reqBody := map[string]string{
+		"grant_type":    "refresh_token",
+		"client_id":     clientID,
+		"client_secret": clientSecret,
+		"refresh_token": refreshToken,
+	}
+	payload, err := json.Marshal(reqBody)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal request body"})
+		return
+	}
+
+	resp, err := http.Post(tokenURL, "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	var tr TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tr); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if tr.AccessToken == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "missing access token"})
+		return
+	}
+
+	setTokenCookie(c, accessTokenCookie, tr.AccessToken, tr.ExpiresIn)
+	if tr.RefreshToken != "" {
+		setTokenCookie(c, refreshTokenCookie, tr.RefreshToken, 60*60*24*30)
+	}
+
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, gin.H{"refreshed": true})
 }

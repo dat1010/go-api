@@ -19,12 +19,6 @@ RUN export PATH=$PATH:$(go env GOPATH)/bin && swag init --generalInfo cmd/main.g
 RUN ls -la docs/ || echo "docs directory not found"
 RUN cat docs/swagger.json | jq '.paths | keys' || echo "Failed to read swagger.json"
 
-# Build one-off migration binary
-WORKDIR /app/scripts/turso_migrate
-RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -a -o /app/turso_migrate .
-WORKDIR /app
-
 # Build the binary; disable CGO for a statically linked binary
 RUN CGO_ENABLED=0 GOOS=linux go build -a -o main ./cmd/
 
@@ -42,8 +36,6 @@ COPY --from=build /app/main .
 COPY --from=build /app/docs ./docs
 # Copy migrations so runtime migration runner can find them
 COPY --from=build /app/migrations ./migrations
-# Copy one-off migration binary
-COPY --from=build /app/turso_migrate ./turso_migrate
 
 # Expose the port your Gin app listens on
 EXPOSE 8080

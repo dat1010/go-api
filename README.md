@@ -11,6 +11,8 @@ Not sure what the direction of this api will be. starting simple with a /api/hea
 
 The plan is to use Aurora PostgreSQL on AWS ECS.
 
+TODO: Replace sqlx with the recommended Postgres-native approach (pgx) to remove sqlite test deps.
+
 
 Lets get started.
 

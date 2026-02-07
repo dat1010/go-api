@@ -29,6 +29,8 @@ NETWORK_CONFIG=$(aws ecs describe-services \
   --query 'services[0].networkConfiguration.awsvpcConfiguration' \
   --output json)
 
+NETWORK_CONFIG_JSON=$(echo "$NETWORK_CONFIG" | jq -c 'if type == "string" then fromjson else . end')
+
 OVERRIDES=$(jq -n \
   --arg name "$CONTAINER_NAME" \
   --arg tursoURL "$TURSO_DATABASE_URL" \
@@ -64,7 +66,7 @@ TASK_ARN=$(aws ecs run-task \
   --cluster "$CLUSTER" \
   --task-definition "$TASK_DEFINITION" \
   --launch-type FARGATE \
-  --network-configuration "awsvpcConfiguration=$(echo "$NETWORK_CONFIG" | jq -c '.')" \
+  --network-configuration "awsvpcConfiguration=$NETWORK_CONFIG_JSON" \
   --overrides "$OVERRIDES" \
   --query 'tasks[0].taskArn' \
   --output text)

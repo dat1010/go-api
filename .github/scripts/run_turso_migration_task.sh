@@ -26,10 +26,8 @@ CONTAINER_NAME=$(echo "$TASK_DEFINITION_JSON" | jq -r '.containerDefinitions[0].
 NETWORK_CONFIG=$(aws ecs describe-services \
   --cluster "$CLUSTER" \
   --services "$SERVICE" \
-  --query 'services[0].networkConfiguration.awsvpcConfiguration' \
+  --query 'services[0].networkConfiguration' \
   --output json)
-
-NETWORK_CONFIG_JSON=$(echo "$NETWORK_CONFIG" | jq -c 'if type == "string" then fromjson else . end')
 
 OVERRIDES=$(jq -n \
   --arg name "$CONTAINER_NAME" \
@@ -66,7 +64,7 @@ TASK_ARN=$(aws ecs run-task \
   --cluster "$CLUSTER" \
   --task-definition "$TASK_DEFINITION" \
   --launch-type FARGATE \
-  --network-configuration "awsvpcConfiguration=$NETWORK_CONFIG_JSON" \
+  --network-configuration "$NETWORK_CONFIG" \
   --overrides "$OVERRIDES" \
   --query 'tasks[0].taskArn' \
   --output text)

@@ -6,8 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const discordWebhookURL = ""
-
 type discordWebhookPayload struct {
 	Content string `json:"content"`
 }

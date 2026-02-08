@@ -181,7 +181,7 @@ func Logout(c *gin.Context) {
 
 	// Construct the Auth0 logout URL with federated logout to clear all sessions
 	logoutURL := fmt.Sprintf(
-		"https://%s/v2/logout?client_id=%s&returnTo=%s&federated",
+		"https://%s/v2/logout?client_id=%s&returnTo=%s",
 		domain,
 		clientID,
 		url.QueryEscape(returnTo),

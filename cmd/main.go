@@ -56,9 +56,12 @@ func main() {
 	// Initialize repositories and services
 	postRepo := repositories.NewPostRepository(db)
 	postService := services.NewPostService(postRepo)
+	userRepo := repositories.NewUserRepository(db)
+	userService := services.NewUserService(userRepo)
 
 	// Set the post service for controllers
 	controllers.SetPostService(postService)
+	controllers.SetUserService(userService)
 
 	router := gin.Default()
 

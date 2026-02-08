@@ -22,7 +22,18 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	// Protected routes
 	protected := api.Group("")
 	protected.Use(middleware.Auth0())
+	protected.Use(middleware.EnsureUserRole("member"))
 	protected.GET("/me", controllers.CheckAuth)
 	protected.POST("/events", controllers.CreateEvent)
 	protected.GET("/events", controllers.ListUserEvents)
+
+	// Admin routes (superadmin only)
+	admin := api.Group("/admin")
+	admin.Use(middleware.Auth0())
+	admin.Use(middleware.EnsureUserRole("member"))
+	admin.Use(middleware.RequireRole("superadmin"))
+	admin.GET("/users", controllers.ListUsers)
+	admin.POST("/users", controllers.CreateUser)
+	admin.PATCH("/users/:id/role", controllers.UpdateUserRole)
+	admin.DELETE("/users/:id", controllers.DeleteUser)
 }

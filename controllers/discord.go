@@ -40,7 +40,7 @@ func PingDiscord(c *gin.Context) {
 <body>
   <div class="card">
     <h1>Ping Sent</h1>
-    <p>This feature is no longer available. Please use the <a href="https://github.com/tannerdolby/go-api">go-api</a> instead.</p>
+    <p>This feature is no longer available.</p>
   </div>
 </body>
 </html>`

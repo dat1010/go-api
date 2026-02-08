@@ -15,6 +15,7 @@ func RegisterPostRoutes(r *gin.RouterGroup) {
 
 		// Protected routes
 		posts.Use(middleware.Auth0())
+		posts.Use(middleware.EnsureUserRole("member"))
 		posts.POST("", controllers.CreatePost)
 		posts.PUT("/:id", controllers.UpdatePost)
 		posts.DELETE("/:id", controllers.DeletePost)

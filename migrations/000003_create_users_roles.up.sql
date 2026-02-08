@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS users (
+    auth0_user_id TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS user_roles (
+    auth0_user_id TEXT NOT NULL REFERENCES users(auth0_user_id) ON DELETE CASCADE,
+    role_id INT NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (auth0_user_id)
+);
+
+INSERT INTO roles (name)
+VALUES ('superadmin'), ('member')
+ON CONFLICT DO NOTHING;

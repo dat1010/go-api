@@ -206,9 +206,18 @@ func CheckAuth(c *gin.Context) {
 		return
 	}
 
+	role := ""
+	if userService != nil {
+		r, err := userService.GetUserRole(auth0UserID)
+		if err == nil {
+			role = r
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"authenticated": true,
 		"user_id":       auth0UserID,
+		"role":          role,
 		"message":       "User is authenticated",
 	})
 }

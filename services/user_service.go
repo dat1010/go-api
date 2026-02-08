@@ -16,6 +16,7 @@ type UserService interface {
 	SetUserRole(auth0UserID, roleName string) error
 	DeleteUser(auth0UserID string) error
 	IsUserInRole(auth0UserID, roleName string) (bool, error)
+	GetUserRole(auth0UserID string) (string, error)
 }
 
 type userService struct {
@@ -63,4 +64,8 @@ func (s *userService) DeleteUser(auth0UserID string) error {
 
 func (s *userService) IsUserInRole(auth0UserID, roleName string) (bool, error) {
 	return s.repo.IsUserInRole(auth0UserID, roleName)
+}
+
+func (s *userService) GetUserRole(auth0UserID string) (string, error) {
+	return s.repo.GetUserRole(auth0UserID)
 }

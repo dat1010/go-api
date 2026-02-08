@@ -22,7 +22,7 @@ var (
 // @Tags         health
 // @Produce      json
 // @Success      200  {object}  Health
-// @Router       /api/healthcheck [get]
+// @Router       /healthcheck [get]
 func GetHealthCheck(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, healthCheckData)
 }

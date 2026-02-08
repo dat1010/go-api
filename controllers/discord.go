@@ -23,7 +23,7 @@ type DiscordPingResponse struct {
 // @Produce      json
 // @Success      200  {object}  DiscordPingResponse
 // @Failure      500  {object}  map[string]string
-// @Router       /api/discord-ping [get]
+// @Router       /discord-ping [get]
 func PingDiscord(c *gin.Context) {
 	html := `<!doctype html>
 <html lang="en">

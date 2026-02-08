@@ -63,7 +63,7 @@ func setTokenCookie(c *gin.Context, name, value string, maxAge int) {
 // @Tags auth
 // @Produce json
 // @Success 307 {string} string "Redirect to Auth0"
-// @Router /api/login [get]
+// @Router /login [get]
 func Login(c *gin.Context) {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	clientID := os.Getenv("AUTH0_CLIENT_ID")
@@ -93,7 +93,7 @@ func Login(c *gin.Context) {
 // @Param code query string true "Authorization code from Auth0"
 // @Success 200 {object} controllers.TokenResponse "Authentication successful"
 // @Failure 500 {object} object "Internal server error"
-// @Router /api/callback [get]
+// @Router /callback [get]
 func Callback(c *gin.Context) {
 	code := c.Query("code")
 	domain := os.Getenv("AUTH0_DOMAIN")
@@ -163,7 +163,7 @@ func Callback(c *gin.Context) {
 // @Tags auth
 // @Produce json
 // @Success 307 {string} string "Redirect to Auth0 logout"
-// @Router /api/logout [get]
+// @Router /logout [get]
 func Logout(c *gin.Context) {
 	domain := os.Getenv("AUTH0_DOMAIN")
 	clientID := os.Getenv("AUTH0_CLIENT_ID")
@@ -195,7 +195,7 @@ func Logout(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} object "User is authenticated"
 // @Failure 401 {object} object "User is not authenticated"
-// @Router /api/me [get]
+// @Router /me [get]
 func CheckAuth(c *gin.Context) {
 	auth0UserID, ok := utils.GetAuth0UserID(c)
 	if !ok {
@@ -220,7 +220,7 @@ func CheckAuth(c *gin.Context) {
 // @Success 200 {object} object "Token refreshed"
 // @Failure 401 {object} object "Missing refresh token"
 // @Failure 500 {object} object "Internal server error"
-// @Router /api/refresh [post]
+// @Router /refresh [post]
 func Refresh(c *gin.Context) {
 	refreshToken, err := c.Cookie(refreshTokenCookie)
 	if err != nil || refreshToken == "" {

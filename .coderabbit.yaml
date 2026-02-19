@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+early_access: false
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: false
+  review_status: true
+  commit_status: true
+  poem: false
+  collapse_walkthrough: false
+  sequence_diagrams: false
+  suggested_labels: false
+  suggested_reviewers: false
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+  path_filters:
+    - "!vendor/**"
+    - "!coverage.out"
+    - "!coverage.txt"
+  path_instructions:
+    - path: "**/*.go"
+      instructions: |
+        Follow existing patterns in this repo first; do not introduce new frameworks, styles, or architectural shifts unless explicitly requested.
+        Prefer small, incremental diffs; avoid broad refactors unless requested.
+        Do not comment on formatting-only concerns; formatter and linter handle style consistency.
+        Prioritize correctness, security, performance, concurrency safety, and API boundary compatibility.
+        If uncertain, ask clarifying questions in the review instead of guessing.
+    - path: "migrations/**/*.sql"
+      instructions: |
+        Focus on migration safety: backward compatibility, rollback correctness, data integrity, lock duration, and production impact.
+        Flag destructive or irreversible operations unless explicitly justified.
+
+chat:
+  auto_reply: true

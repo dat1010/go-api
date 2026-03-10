@@ -1,4 +1,4 @@
-//go:generate swag init --generalInfo main.go --output ../docs
+//go:generate swag init --generalInfo main.go --dir .,../controllers,../models --output ../docs
 package main
 
 import (

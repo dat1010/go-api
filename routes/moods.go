@@ -14,4 +14,7 @@ func RegisterMoodRoutes(r *gin.RouterGroup) {
 	moods.GET("/mood-entries/:id", controllers.GetMoodEntry)
 	moods.POST("/mood-entries", controllers.CreateMoodEntry)
 	moods.PUT("/mood-entries/:id", controllers.UpdateMoodEntry)
+	moods.GET("/moods/analytics/overview", controllers.GetMoodOverviewAnalytics)
+	moods.GET("/moods/analytics/patterns", controllers.GetMoodPatternsAnalytics)
+	moods.GET("/moods/analytics/insights", controllers.GetMoodInsightsAnalytics)
 }

@@ -16,6 +16,7 @@ type MoodRepository interface {
 	GetActiveTagsByIDs(ids []string) ([]models.MoodTag, error)
 	CreateEntry(entry *models.MoodEntry, tagIDs []string) error
 	ListEntries(params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
+	ListEntriesForAnalytics(start, end time.Time) ([]models.MoodEntry, error)
 	GetEntryByID(id string) (*models.MoodEntry, error)
 	UpdateEntry(id string, note *string, tagIDs []string) error
 }
@@ -122,6 +123,25 @@ func (r *moodRepository) ListEntries(params models.ListMoodEntriesParams) ([]mod
 	if err := r.db.Select(&entries, baseQuery, args...); err != nil {
 		return nil, err
 	}
+
+	return r.hydrateEntries(entries)
+}
+
+func (r *moodRepository) ListEntriesForAnalytics(start, end time.Time) ([]models.MoodEntry, error) {
+	var entries []models.MoodEntry
+	if err := r.db.Select(&entries, `
+		SELECT id, created_at, updated_at, note
+		FROM mood_entries
+		WHERE created_at >= $1 AND created_at <= $2
+		ORDER BY created_at ASC
+	`, start, end); err != nil {
+		return nil, err
+	}
+
+	return r.hydrateEntries(entries)
+}
+
+func (r *moodRepository) hydrateEntries(entries []models.MoodEntry) ([]models.MoodEntry, error) {
 
 	if len(entries) == 0 {
 		return []models.MoodEntry{}, nil

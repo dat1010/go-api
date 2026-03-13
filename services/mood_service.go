@@ -34,6 +34,9 @@ type MoodService interface {
 	GetMoodEntry(id string) (*models.MoodEntry, error)
 	CreateMoodEntry(req *models.CreateMoodEntryRequest) (*models.MoodEntry, error)
 	UpdateMoodEntry(id string, req *models.UpdateMoodEntryRequest) (*models.MoodEntry, error)
+	GetMoodOverviewAnalytics(params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error)
+	GetMoodPatternsAnalytics(params models.MoodAnalyticsParams) (*models.MoodPatternsAnalytics, error)
+	GetMoodInsightsAnalytics(params models.MoodAnalyticsParams) (*models.MoodInsightsAnalytics, error)
 }
 
 type moodService struct {

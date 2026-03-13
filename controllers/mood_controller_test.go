@@ -16,12 +16,15 @@ import (
 )
 
 type mockMoodService struct {
-	ListMoodTagsFunc    func() ([]models.MoodTag, error)
-	CreateMoodTagFunc   func(req *models.CreateMoodTagRequest) (*models.MoodTag, error)
-	ListMoodEntriesFunc func(params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
-	GetMoodEntryFunc    func(id string) (*models.MoodEntry, error)
-	CreateMoodEntryFunc func(req *models.CreateMoodEntryRequest) (*models.MoodEntry, error)
-	UpdateMoodEntryFunc func(id string, req *models.UpdateMoodEntryRequest) (*models.MoodEntry, error)
+	ListMoodTagsFunc             func() ([]models.MoodTag, error)
+	CreateMoodTagFunc            func(req *models.CreateMoodTagRequest) (*models.MoodTag, error)
+	ListMoodEntriesFunc          func(params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
+	GetMoodEntryFunc             func(id string) (*models.MoodEntry, error)
+	CreateMoodEntryFunc          func(req *models.CreateMoodEntryRequest) (*models.MoodEntry, error)
+	UpdateMoodEntryFunc          func(id string, req *models.UpdateMoodEntryRequest) (*models.MoodEntry, error)
+	GetMoodOverviewAnalyticsFunc func(params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error)
+	GetMoodPatternsAnalyticsFunc func(params models.MoodAnalyticsParams) (*models.MoodPatternsAnalytics, error)
+	GetMoodInsightsAnalyticsFunc func(params models.MoodAnalyticsParams) (*models.MoodInsightsAnalytics, error)
 }
 
 func (m *mockMoodService) ListMoodTags() ([]models.MoodTag, error) {
@@ -46,6 +49,18 @@ func (m *mockMoodService) CreateMoodEntry(req *models.CreateMoodEntryRequest) (*
 
 func (m *mockMoodService) UpdateMoodEntry(id string, req *models.UpdateMoodEntryRequest) (*models.MoodEntry, error) {
 	return m.UpdateMoodEntryFunc(id, req)
+}
+
+func (m *mockMoodService) GetMoodOverviewAnalytics(params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error) {
+	return m.GetMoodOverviewAnalyticsFunc(params)
+}
+
+func (m *mockMoodService) GetMoodPatternsAnalytics(params models.MoodAnalyticsParams) (*models.MoodPatternsAnalytics, error) {
+	return m.GetMoodPatternsAnalyticsFunc(params)
+}
+
+func (m *mockMoodService) GetMoodInsightsAnalytics(params models.MoodAnalyticsParams) (*models.MoodInsightsAnalytics, error) {
+	return m.GetMoodInsightsAnalyticsFunc(params)
 }
 
 func TestGetMoodTagsSuccess(t *testing.T) {
@@ -189,4 +204,29 @@ func TestUpdateMoodEntrySuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"id":"entry-1"`)
+}
+
+func TestGetMoodOverviewAnalyticsParsesTimezoneAndDates(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	moodService = &mockMoodService{
+		GetMoodOverviewAnalyticsFunc: func(params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error) {
+			assert.Equal(t, "America/New_York", params.Timezone)
+			assert.Equal(t, "2026-03-01T05:00:00Z", params.Start.Format(time.RFC3339))
+			assert.Equal(t, "2026-03-11T03:59:59Z", params.End.Format(time.RFC3339))
+			return &models.MoodOverviewAnalytics{}, nil
+		},
+	}
+
+	router := gin.Default()
+	router.GET("/moods/analytics/overview", GetMoodOverviewAnalytics)
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/moods/analytics/overview?start=2026-03-01&end=2026-03-10&timezone=America/New_York",
+		nil,
+	)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

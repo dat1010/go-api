@@ -11,13 +11,14 @@ import (
 )
 
 type mockMoodRepository struct {
-	ListActiveTagsFunc     func() ([]models.MoodTag, error)
-	CreateTagFunc          func(tag *models.MoodTag) error
-	GetActiveTagsByIDsFunc func(ids []string) ([]models.MoodTag, error)
-	CreateEntryFunc        func(entry *models.MoodEntry, tagIDs []string) error
-	ListEntriesFunc        func(params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
-	GetEntryByIDFunc       func(id string) (*models.MoodEntry, error)
-	UpdateEntryFunc        func(id string, note *string, tagIDs []string) error
+	ListActiveTagsFunc          func() ([]models.MoodTag, error)
+	CreateTagFunc               func(tag *models.MoodTag) error
+	GetActiveTagsByIDsFunc      func(ids []string) ([]models.MoodTag, error)
+	CreateEntryFunc             func(entry *models.MoodEntry, tagIDs []string) error
+	ListEntriesFunc             func(params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
+	ListEntriesForAnalyticsFunc func(start, end time.Time) ([]models.MoodEntry, error)
+	GetEntryByIDFunc            func(id string) (*models.MoodEntry, error)
+	UpdateEntryFunc             func(id string, note *string, tagIDs []string) error
 }
 
 func (m *mockMoodRepository) ListActiveTags() ([]models.MoodTag, error) {
@@ -38,6 +39,10 @@ func (m *mockMoodRepository) CreateEntry(entry *models.MoodEntry, tagIDs []strin
 
 func (m *mockMoodRepository) ListEntries(params models.ListMoodEntriesParams) ([]models.MoodEntry, error) {
 	return m.ListEntriesFunc(params)
+}
+
+func (m *mockMoodRepository) ListEntriesForAnalytics(start, end time.Time) ([]models.MoodEntry, error) {
+	return m.ListEntriesForAnalyticsFunc(start, end)
 }
 
 func (m *mockMoodRepository) GetEntryByID(id string) (*models.MoodEntry, error) {

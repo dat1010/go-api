@@ -8,6 +8,7 @@ import (
 
 	"github.com/dat1010/go-api/models"
 	"github.com/dat1010/go-api/services"
+	"github.com/dat1010/go-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -87,7 +88,13 @@ func GetMoodEntries(c *gin.Context) {
 		return
 	}
 
-	entries, err := moodService.ListMoodEntries(params)
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	entries, err := moodService.ListMoodEntries(auth0UserID, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -106,7 +113,13 @@ func GetMoodEntries(c *gin.Context) {
 // @Failure 404 {object} object "Mood entry not found"
 // @Router /mood-entries/{id} [get]
 func GetMoodEntry(c *gin.Context) {
-	entry, err := moodService.GetMoodEntry(c.Param("id"))
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	entry, err := moodService.GetMoodEntry(auth0UserID, c.Param("id"))
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrMoodEntryNotFound):
@@ -137,7 +150,13 @@ func CreateMoodEntry(c *gin.Context) {
 		return
 	}
 
-	entry, err := moodService.CreateMoodEntry(&req)
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	entry, err := moodService.CreateMoodEntry(auth0UserID, &req)
 	if err != nil {
 		handleMoodEntryError(c, err)
 		return
@@ -165,7 +184,13 @@ func UpdateMoodEntry(c *gin.Context) {
 		return
 	}
 
-	entry, err := moodService.UpdateMoodEntry(c.Param("id"), &req)
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	entry, err := moodService.UpdateMoodEntry(auth0UserID, c.Param("id"), &req)
 	if err != nil {
 		handleMoodEntryError(c, err)
 		return

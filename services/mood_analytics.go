@@ -39,8 +39,8 @@ var moodSentimentCategories = map[string]sentimentCategory{
 	"stressed":    sentimentNegative,
 }
 
-func (s *moodService) GetMoodOverviewAnalytics(params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error) {
-	entries, err := s.repo.ListEntriesForAnalytics(params.Start, params.End)
+func (s *moodService) GetMoodOverviewAnalytics(auth0UserID string, params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error) {
+	entries, err := s.repo.ListEntriesForAnalytics(auth0UserID, params.Start, params.End)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +48,8 @@ func (s *moodService) GetMoodOverviewAnalytics(params models.MoodAnalyticsParams
 	return buildOverviewAnalytics(entries), nil
 }
 
-func (s *moodService) GetMoodPatternsAnalytics(params models.MoodAnalyticsParams) (*models.MoodPatternsAnalytics, error) {
-	entries, err := s.repo.ListEntriesForAnalytics(params.Start, params.End)
+func (s *moodService) GetMoodPatternsAnalytics(auth0UserID string, params models.MoodAnalyticsParams) (*models.MoodPatternsAnalytics, error) {
+	entries, err := s.repo.ListEntriesForAnalytics(auth0UserID, params.Start, params.End)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +57,8 @@ func (s *moodService) GetMoodPatternsAnalytics(params models.MoodAnalyticsParams
 	return buildPatternsAnalytics(entries, params.Location), nil
 }
 
-func (s *moodService) GetMoodInsightsAnalytics(params models.MoodAnalyticsParams) (*models.MoodInsightsAnalytics, error) {
-	entries, err := s.repo.ListEntriesForAnalytics(params.Start, params.End)
+func (s *moodService) GetMoodInsightsAnalytics(auth0UserID string, params models.MoodAnalyticsParams) (*models.MoodInsightsAnalytics, error) {
+	entries, err := s.repo.ListEntriesForAnalytics(auth0UserID, params.Start, params.End)
 	if err != nil {
 		return nil, err
 	}

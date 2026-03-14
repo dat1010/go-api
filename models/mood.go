@@ -11,11 +11,12 @@ type MoodTag struct {
 }
 
 type MoodEntry struct {
-	ID        string    `json:"id" db:"id"`
-	CreatedAt time.Time `json:"createdAt" db:"created_at"`
-	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
-	Note      *string   `json:"note" db:"note"`
-	Tags      []MoodTag `json:"tags"`
+	ID          string    `json:"id" db:"id"`
+	Auth0UserID string    `json:"-" db:"auth0_user_id"`
+	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
+	Note        *string   `json:"note" db:"note"`
+	Tags        []MoodTag `json:"tags"`
 }
 
 type CreateMoodTagRequest struct {

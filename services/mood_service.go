@@ -30,13 +30,13 @@ var (
 type MoodService interface {
 	ListMoodTags() ([]models.MoodTag, error)
 	CreateMoodTag(req *models.CreateMoodTagRequest) (*models.MoodTag, error)
-	ListMoodEntries(params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
-	GetMoodEntry(id string) (*models.MoodEntry, error)
-	CreateMoodEntry(req *models.CreateMoodEntryRequest) (*models.MoodEntry, error)
-	UpdateMoodEntry(id string, req *models.UpdateMoodEntryRequest) (*models.MoodEntry, error)
-	GetMoodOverviewAnalytics(params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error)
-	GetMoodPatternsAnalytics(params models.MoodAnalyticsParams) (*models.MoodPatternsAnalytics, error)
-	GetMoodInsightsAnalytics(params models.MoodAnalyticsParams) (*models.MoodInsightsAnalytics, error)
+	ListMoodEntries(auth0UserID string, params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
+	GetMoodEntry(auth0UserID, id string) (*models.MoodEntry, error)
+	CreateMoodEntry(auth0UserID string, req *models.CreateMoodEntryRequest) (*models.MoodEntry, error)
+	UpdateMoodEntry(auth0UserID, id string, req *models.UpdateMoodEntryRequest) (*models.MoodEntry, error)
+	GetMoodOverviewAnalytics(auth0UserID string, params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error)
+	GetMoodPatternsAnalytics(auth0UserID string, params models.MoodAnalyticsParams) (*models.MoodPatternsAnalytics, error)
+	GetMoodInsightsAnalytics(auth0UserID string, params models.MoodAnalyticsParams) (*models.MoodInsightsAnalytics, error)
 }
 
 type moodService struct {
@@ -76,7 +76,7 @@ func (s *moodService) CreateMoodTag(req *models.CreateMoodTagRequest) (*models.M
 	return tag, nil
 }
 
-func (s *moodService) ListMoodEntries(params models.ListMoodEntriesParams) ([]models.MoodEntry, error) {
+func (s *moodService) ListMoodEntries(auth0UserID string, params models.ListMoodEntriesParams) ([]models.MoodEntry, error) {
 	if params.Limit <= 0 {
 		params.Limit = defaultMoodEntriesLimit
 	}
@@ -84,15 +84,15 @@ func (s *moodService) ListMoodEntries(params models.ListMoodEntriesParams) ([]mo
 		params.Limit = maxMoodEntriesLimit
 	}
 
-	return s.repo.ListEntries(params)
+	return s.repo.ListEntries(auth0UserID, params)
 }
 
-func (s *moodService) GetMoodEntry(id string) (*models.MoodEntry, error) {
+func (s *moodService) GetMoodEntry(auth0UserID, id string) (*models.MoodEntry, error) {
 	if _, err := uuid.Parse(id); err != nil {
 		return nil, err
 	}
 
-	entry, err := s.repo.GetEntryByID(id)
+	entry, err := s.repo.GetEntryByID(auth0UserID, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrMoodEntryNotFound
@@ -103,7 +103,7 @@ func (s *moodService) GetMoodEntry(id string) (*models.MoodEntry, error) {
 	return entry, nil
 }
 
-func (s *moodService) CreateMoodEntry(req *models.CreateMoodEntryRequest) (*models.MoodEntry, error) {
+func (s *moodService) CreateMoodEntry(auth0UserID string, req *models.CreateMoodEntryRequest) (*models.MoodEntry, error) {
 	tagIDs, err := s.validateMoodEntryInput(req.TagIDs, req.Note)
 	if err != nil {
 		return nil, err
@@ -111,20 +111,21 @@ func (s *moodService) CreateMoodEntry(req *models.CreateMoodEntryRequest) (*mode
 
 	now := time.Now().UTC()
 	entry := &models.MoodEntry{
-		ID:        uuid.New().String(),
-		CreatedAt: now,
-		UpdatedAt: now,
-		Note:      normalizeMoodNote(req.Note),
+		ID:          uuid.New().String(),
+		Auth0UserID: auth0UserID,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		Note:        normalizeMoodNote(req.Note),
 	}
 
 	if err := s.repo.CreateEntry(entry, tagIDs); err != nil {
 		return nil, err
 	}
 
-	return s.repo.GetEntryByID(entry.ID)
+	return s.repo.GetEntryByID(auth0UserID, entry.ID)
 }
 
-func (s *moodService) UpdateMoodEntry(id string, req *models.UpdateMoodEntryRequest) (*models.MoodEntry, error) {
+func (s *moodService) UpdateMoodEntry(auth0UserID, id string, req *models.UpdateMoodEntryRequest) (*models.MoodEntry, error) {
 	if _, err := uuid.Parse(id); err != nil {
 		return nil, err
 	}
@@ -134,14 +135,14 @@ func (s *moodService) UpdateMoodEntry(id string, req *models.UpdateMoodEntryRequ
 		return nil, err
 	}
 
-	if err := s.repo.UpdateEntry(id, normalizeMoodNote(req.Note), tagIDs); err != nil {
+	if err := s.repo.UpdateEntry(auth0UserID, id, normalizeMoodNote(req.Note), tagIDs); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrMoodEntryNotFound
 		}
 		return nil, err
 	}
 
-	return s.repo.GetEntryByID(id)
+	return s.repo.GetEntryByID(auth0UserID, id)
 }
 
 func (s *moodService) validateMoodEntryInput(tagIDs []string, note *string) ([]string, error) {

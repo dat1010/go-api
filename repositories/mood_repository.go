@@ -15,10 +15,10 @@ type MoodRepository interface {
 	CreateTag(tag *models.MoodTag) error
 	GetActiveTagsByIDs(ids []string) ([]models.MoodTag, error)
 	CreateEntry(entry *models.MoodEntry, tagIDs []string) error
-	ListEntries(params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
-	ListEntriesForAnalytics(start, end time.Time) ([]models.MoodEntry, error)
-	GetEntryByID(id string) (*models.MoodEntry, error)
-	UpdateEntry(id string, note *string, tagIDs []string) error
+	ListEntries(auth0UserID string, params models.ListMoodEntriesParams) ([]models.MoodEntry, error)
+	ListEntriesForAnalytics(auth0UserID string, start, end time.Time) ([]models.MoodEntry, error)
+	GetEntryByID(auth0UserID, id string) (*models.MoodEntry, error)
+	UpdateEntry(auth0UserID, id string, note *string, tagIDs []string) error
 }
 
 type moodRepository struct {
@@ -82,9 +82,9 @@ func (r *moodRepository) CreateEntry(entry *models.MoodEntry, tagIDs []string) e
 	}()
 
 	if _, err = tx.Exec(`
-		INSERT INTO mood_entries (id, created_at, updated_at, note)
-		VALUES ($1, $2, $3, $4)
-	`, entry.ID, entry.CreatedAt, entry.UpdatedAt, entry.Note); err != nil {
+		INSERT INTO mood_entries (id, auth0_user_id, created_at, updated_at, note)
+		VALUES ($1, $2, $3, $4, $5)
+	`, entry.ID, entry.Auth0UserID, entry.CreatedAt, entry.UpdatedAt, entry.Note); err != nil {
 		return err
 	}
 
@@ -95,14 +95,14 @@ func (r *moodRepository) CreateEntry(entry *models.MoodEntry, tagIDs []string) e
 	return tx.Commit()
 }
 
-func (r *moodRepository) ListEntries(params models.ListMoodEntriesParams) ([]models.MoodEntry, error) {
+func (r *moodRepository) ListEntries(auth0UserID string, params models.ListMoodEntriesParams) ([]models.MoodEntry, error) {
 	baseQuery := `
-		SELECT id, created_at, updated_at, note
+		SELECT id, auth0_user_id, created_at, updated_at, note
 		FROM mood_entries
 	`
 
-	var conditions []string
-	args := []interface{}{}
+	conditions := []string{fmt.Sprintf("auth0_user_id = $%d", 1)}
+	args := []interface{}{auth0UserID}
 
 	if params.From != nil {
 		conditions = append(conditions, fmt.Sprintf("created_at >= $%d", len(args)+1))
@@ -112,9 +112,7 @@ func (r *moodRepository) ListEntries(params models.ListMoodEntriesParams) ([]mod
 		conditions = append(conditions, fmt.Sprintf("created_at <= $%d", len(args)+1))
 		args = append(args, *params.To)
 	}
-	if len(conditions) > 0 {
-		baseQuery += " WHERE " + strings.Join(conditions, " AND ")
-	}
+	baseQuery += " WHERE " + strings.Join(conditions, " AND ")
 
 	baseQuery += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d", len(args)+1)
 	args = append(args, params.Limit)
@@ -127,14 +125,14 @@ func (r *moodRepository) ListEntries(params models.ListMoodEntriesParams) ([]mod
 	return r.hydrateEntries(entries)
 }
 
-func (r *moodRepository) ListEntriesForAnalytics(start, end time.Time) ([]models.MoodEntry, error) {
+func (r *moodRepository) ListEntriesForAnalytics(auth0UserID string, start, end time.Time) ([]models.MoodEntry, error) {
 	var entries []models.MoodEntry
 	if err := r.db.Select(&entries, `
-		SELECT id, created_at, updated_at, note
+		SELECT id, auth0_user_id, created_at, updated_at, note
 		FROM mood_entries
-		WHERE created_at >= $1 AND created_at <= $2
+		WHERE auth0_user_id = $1 AND created_at >= $2 AND created_at <= $3
 		ORDER BY created_at ASC
-	`, start, end); err != nil {
+	`, auth0UserID, start, end); err != nil {
 		return nil, err
 	}
 
@@ -162,13 +160,13 @@ func (r *moodRepository) hydrateEntries(entries []models.MoodEntry) ([]models.Mo
 	return entries, nil
 }
 
-func (r *moodRepository) GetEntryByID(id string) (*models.MoodEntry, error) {
+func (r *moodRepository) GetEntryByID(auth0UserID, id string) (*models.MoodEntry, error) {
 	var entry models.MoodEntry
 	if err := r.db.Get(&entry, `
-		SELECT id, created_at, updated_at, note
+		SELECT id, auth0_user_id, created_at, updated_at, note
 		FROM mood_entries
-		WHERE id = $1
-	`, id); err != nil {
+		WHERE auth0_user_id = $1 AND id = $2
+	`, auth0UserID, id); err != nil {
 		return nil, err
 	}
 
@@ -185,7 +183,7 @@ func (r *moodRepository) GetEntryByID(id string) (*models.MoodEntry, error) {
 	return &entry, nil
 }
 
-func (r *moodRepository) UpdateEntry(id string, note *string, tagIDs []string) error {
+func (r *moodRepository) UpdateEntry(auth0UserID, id string, note *string, tagIDs []string) error {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return err
@@ -199,8 +197,8 @@ func (r *moodRepository) UpdateEntry(id string, note *string, tagIDs []string) e
 	result, err := tx.Exec(`
 		UPDATE mood_entries
 		SET note = $2, updated_at = $3
-		WHERE id = $1
-	`, id, note, time.Now().UTC())
+		WHERE id = $1 AND auth0_user_id = $4
+	`, id, note, time.Now().UTC(), auth0UserID)
 	if err != nil {
 		return err
 	}

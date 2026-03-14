@@ -9,6 +9,7 @@ import (
 
 	"github.com/dat1010/go-api/models"
 	"github.com/dat1010/go-api/services"
+	"github.com/dat1010/go-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +31,13 @@ func GetMoodOverviewAnalytics(c *gin.Context) {
 		return
 	}
 
-	analytics, err := moodService.GetMoodOverviewAnalytics(params)
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	analytics, err := moodService.GetMoodOverviewAnalytics(auth0UserID, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -57,7 +64,13 @@ func GetMoodPatternsAnalytics(c *gin.Context) {
 		return
 	}
 
-	analytics, err := moodService.GetMoodPatternsAnalytics(params)
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	analytics, err := moodService.GetMoodPatternsAnalytics(auth0UserID, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -84,7 +97,13 @@ func GetMoodInsightsAnalytics(c *gin.Context) {
 		return
 	}
 
-	analytics, err := moodService.GetMoodInsightsAnalytics(params)
+	auth0UserID, ok := utils.GetAuth0UserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	analytics, err := moodService.GetMoodInsightsAnalytics(auth0UserID, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

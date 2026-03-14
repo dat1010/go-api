@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/dat1010/go-api/config"
 	"github.com/dat1010/go-api/controllers"

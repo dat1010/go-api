@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -96,6 +97,7 @@ func buildMoodAnalyticsParams(c *gin.Context) (models.MoodAnalyticsParams, error
 	locationName := strings.TrimSpace(c.DefaultQuery("timezone", "UTC"))
 	location, err := time.LoadLocation(locationName)
 	if err != nil {
+		log.Printf("invalid analytics timezone %q: %v", locationName, err)
 		return models.MoodAnalyticsParams{}, errors.New("timezone must be a valid IANA timezone")
 	}
 

@@ -53,10 +53,23 @@ func TestBuildPatternsAnalyticsComputesCalendarSentiment(t *testing.T) {
 	}, location)
 
 	assert.Equal(t, []models.MoodCalendarDay{
-		{Date: "2026-03-10", EntryCount: 2, Sentiment: "mixed"},
+		{Date: "2026-03-10", EntryCount: 2, Sentiment: "positive"},
 		{Date: "2026-03-11", EntryCount: 2, Sentiment: "negative"},
 		{Date: "2026-03-12", EntryCount: 1, Sentiment: "neutral"},
 		{Date: "2026-03-13", EntryCount: 1, Sentiment: "mixed"},
+	}, analytics.Calendar)
+}
+
+func TestBuildPatternsAnalyticsTreatsCalmFocusedAndGratefulAsPositive(t *testing.T) {
+	location := mustLoadLocation(t, "America/New_York")
+
+	analytics := buildPatternsAnalytics([]models.MoodEntry{
+		fixtureEntry("2026-03-12T13:00:00Z", "grateful", "content"),
+		fixtureEntry("2026-03-12T16:00:00Z", "calm", "focused"),
+	}, location)
+
+	assert.Equal(t, []models.MoodCalendarDay{
+		{Date: "2026-03-12", EntryCount: 2, Sentiment: "positive"},
 	}, analytics.Calendar)
 }
 

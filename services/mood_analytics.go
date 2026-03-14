@@ -22,15 +22,21 @@ const (
 )
 
 var moodSentimentCategories = map[string]sentimentCategory{
-	"content":    sentimentPositive,
-	"tired":      sentimentNeutral,
-	"distracted": sentimentNeutral,
-	"sad":        sentimentNegative,
-	"anxious":    sentimentNegative,
-	"frustrated": sentimentNegative,
-	"lonely":     sentimentNegative,
-	"numb":       sentimentNegative,
-	"stressed":   sentimentNegative,
+	"calm":        sentimentPositive,
+	"content":     sentimentPositive,
+	"focused":     sentimentPositive,
+	"grateful":    sentimentPositive,
+	"happy":       sentimentPositive,
+	"hopeful":     sentimentPositive,
+	"tired":       sentimentNeutral,
+	"distracted":  sentimentNeutral,
+	"anxious":     sentimentNegative,
+	"frustrated":  sentimentNegative,
+	"lonely":      sentimentNegative,
+	"numb":        sentimentNegative,
+	"overwhelmed": sentimentNegative,
+	"sad":         sentimentNegative,
+	"stressed":    sentimentNegative,
 }
 
 func (s *moodService) GetMoodOverviewAnalytics(params models.MoodAnalyticsParams) (*models.MoodOverviewAnalytics, error) {

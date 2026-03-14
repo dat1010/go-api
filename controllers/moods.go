@@ -22,6 +22,7 @@ func SetMoodService(service services.MoodService) {
 // @Description Return all active mood tags.
 // @Tags moods
 // @Produce json
+// @Security Bearer
 // @Success 200 {array} models.MoodTag
 // @Failure 500 {object} object "Internal server error"
 // @Router /mood-tags [get]
@@ -40,6 +41,7 @@ func GetMoodTags(c *gin.Context) {
 // @Tags moods
 // @Accept json
 // @Produce json
+// @Security Bearer
 // @Param request body models.CreateMoodTagRequest true "Mood tag payload"
 // @Success 201 {object} models.MoodTag
 // @Failure 400 {object} object "Invalid request"
@@ -74,6 +76,7 @@ func CreateMoodTag(c *gin.Context) {
 // @Description Return mood entry history in newest-first order.
 // @Tags moods
 // @Produce json
+// @Security Bearer
 // @Param limit query int false "Maximum number of entries to return"
 // @Param from query string false "RFC3339 lower bound for createdAt"
 // @Param to query string false "RFC3339 upper bound for createdAt"
@@ -107,6 +110,7 @@ func GetMoodEntries(c *gin.Context) {
 // @Description Return a single hydrated mood entry.
 // @Tags moods
 // @Produce json
+// @Security Bearer
 // @Param id path string true "Mood entry ID"
 // @Success 200 {object} models.MoodEntry
 // @Failure 400 {object} object "Invalid ID"
@@ -138,6 +142,7 @@ func GetMoodEntry(c *gin.Context) {
 // @Tags moods
 // @Accept json
 // @Produce json
+// @Security Bearer
 // @Param request body models.CreateMoodEntryRequest true "Mood entry payload"
 // @Success 201 {object} models.MoodEntry
 // @Failure 400 {object} object "Invalid request"
@@ -170,6 +175,7 @@ func CreateMoodEntry(c *gin.Context) {
 // @Tags moods
 // @Accept json
 // @Produce json
+// @Security Bearer
 // @Param id path string true "Mood entry ID"
 // @Param request body models.UpdateMoodEntryRequest true "Mood entry payload"
 // @Success 200 {object} models.MoodEntry

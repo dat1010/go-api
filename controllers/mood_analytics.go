@@ -17,6 +17,7 @@ import (
 // @Description Return mood frequency analytics for the selected time window.
 // @Tags moods
 // @Produce json
+// @Security Bearer
 // @Param start query string false "RFC3339 or YYYY-MM-DD start"
 // @Param end query string false "RFC3339 or YYYY-MM-DD end"
 // @Param timezone query string false "IANA timezone, for example America/New_York"
@@ -50,6 +51,7 @@ func GetMoodOverviewAnalytics(c *gin.Context) {
 // @Description Return time-of-day and calendar mood analytics for the selected time window.
 // @Tags moods
 // @Produce json
+// @Security Bearer
 // @Param start query string false "RFC3339 or YYYY-MM-DD start"
 // @Param end query string false "RFC3339 or YYYY-MM-DD end"
 // @Param timezone query string false "IANA timezone, for example America/New_York"
@@ -83,6 +85,7 @@ func GetMoodPatternsAnalytics(c *gin.Context) {
 // @Description Return co-occurrence and transition analytics for the selected time window.
 // @Tags moods
 // @Produce json
+// @Security Bearer
 // @Param start query string false "RFC3339 or YYYY-MM-DD start"
 // @Param end query string false "RFC3339 or YYYY-MM-DD end"
 // @Param timezone query string false "IANA timezone, for example America/New_York"

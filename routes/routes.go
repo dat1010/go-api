@@ -18,6 +18,7 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	api.GET("/healthcheck", controllers.GetHealthCheck)
 	api.GET("/secrets", controllers.GetSecret)
 	api.GET("/discord-ping", controllers.PingDiscord)
+	api.GET("/hello", controllers.HelloWorld)
 
 	// Protected routes
 	protected := api.Group("")

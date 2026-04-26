@@ -26,6 +26,7 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	protected.GET("/me", controllers.CheckAuth)
 	protected.POST("/events", controllers.CreateEvent)
 	protected.GET("/events", controllers.ListUserEvents)
+	protected.POST("/email", controllers.SendEmail)
 
 	// Admin routes (superadmin only)
 	admin := api.Group("/admin")

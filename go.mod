@@ -10,7 +10,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.14
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.39.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.5
-	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.45.1
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-migrate/migrate/v4 v4.17.1

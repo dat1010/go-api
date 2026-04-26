@@ -1,4 +1,4 @@
-//go:generate swag init --generalInfo main.go --output ../docs
+//go:generate swag init --generalInfo main.go --dir .,../controllers,../models --output ../docs
 package main
 
 import (
@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/dat1010/go-api/config"
 	"github.com/dat1010/go-api/controllers"
@@ -56,11 +57,14 @@ func main() {
 	// Initialize repositories and services
 	postRepo := repositories.NewPostRepository(db)
 	postService := services.NewPostService(postRepo)
+	moodRepo := repositories.NewMoodRepository(db)
+	moodService := services.NewMoodService(moodRepo)
 	userRepo := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepo)
 
 	// Set the post service for controllers
 	controllers.SetPostService(postService)
+	controllers.SetMoodService(moodService)
 	controllers.SetUserService(userService)
 
 	router := gin.Default()
@@ -93,6 +97,7 @@ func main() {
 	api := router.Group("/api")
 	routes.RegisterRoutes(api)
 	routes.RegisterPostRoutes(api)
+	routes.RegisterMoodRoutes(api)
 
 	// serve Swagger UI with custom configuration
 	swaggerHandler := ginSwagger.DisablingWrapHandler(swaggerFiles.Handler, "DISABLE_SWAGGER_HTTP_HANDLER")

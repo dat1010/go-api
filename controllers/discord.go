@@ -39,7 +39,7 @@ func PingDiscord(c *gin.Context) {
 </head>
 <body>
   <div class="card">
-    <h1>Ping Sent</h1>
+    <h1>Ping not Sent</h1>
     <p>This feature is no longer available.</p>
   </div>
 </body>

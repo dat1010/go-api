@@ -1,0 +1,1 @@
+-- Seed rollback is intentionally a no-op.

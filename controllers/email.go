@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/mail"
+	"os"
 	"strings"
 	"unicode/utf8"
 
@@ -13,11 +15,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
+	"github.com/aws/smithy-go"
 	"github.com/dat1010/go-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
-const emailFromAddress = "testing@nofeed.zone"
+const defaultEmailFromAddress = "testing@nofeed.zone"
 
 var (
 	emailSender EmailSender = sesEmailSender{}
@@ -81,7 +84,7 @@ func (s sesEmailSender) SendEmail(ctx context.Context, req SendEmailRequest, aut
 	}
 
 	out, err := client.SendEmail(ctx, &sesv2.SendEmailInput{
-		FromEmailAddress: aws.String(emailFromAddress),
+		FromEmailAddress: aws.String(getEmailFromAddress()),
 		Destination: &types.Destination{
 			ToAddresses: req.To,
 		},
@@ -110,7 +113,7 @@ func (s sesEmailSender) SendEmail(ctx context.Context, req SendEmailRequest, aut
 		messageID = *out.MessageId
 	}
 	return &SendEmailResponse{
-		From:      emailFromAddress,
+		From:      getEmailFromAddress(),
 		To:        req.To,
 		MessageID: messageID,
 		Sent:      true,
@@ -149,7 +152,9 @@ func SendEmail(c *gin.Context) {
 
 	res, err := emailSender.SendEmail(c.Request.Context(), req, auth0UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to send email: %v", err)})
+		statusCode, clientMessage := classifyEmailError(err)
+		log.Printf("email send failed user=%s from=%s to=%v subject=%q err=%v", auth0UserID, getEmailFromAddress(), req.To, req.Subject, err)
+		c.JSON(statusCode, gin.H{"error": clientMessage})
 		return
 	}
 	c.JSON(http.StatusAccepted, res)
@@ -209,4 +214,33 @@ func sanitizeSESTagValue(value string) string {
 		return sanitized[:256]
 	}
 	return sanitized
+}
+
+func getEmailFromAddress() string {
+	from := strings.TrimSpace(defaultEmailFromAddress)
+	if configured := strings.TrimSpace(os.Getenv("SES_FROM_EMAIL")); configured != "" {
+		from = configured
+	}
+	return from
+}
+
+func classifyEmailError(err error) (int, string) {
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.ErrorCode() {
+		case "MessageRejected":
+			return http.StatusBadRequest, fmt.Sprintf("SES rejected the message: %s", apiErr.ErrorMessage())
+		case "MailFromDomainNotVerifiedException":
+			return http.StatusBadRequest, fmt.Sprintf("the sender identity is not verified in SES: %s", apiErr.ErrorMessage())
+		case "BadRequestException":
+			return http.StatusBadRequest, fmt.Sprintf("invalid SES email request: %s", apiErr.ErrorMessage())
+		case "TooManyRequestsException", "LimitExceededException":
+			return http.StatusTooManyRequests, fmt.Sprintf("SES rate limited the request: %s", apiErr.ErrorMessage())
+		case "AccessDeniedException", "NotAuthorized":
+			return http.StatusInternalServerError, fmt.Sprintf("AWS denied SES send access: %s", apiErr.ErrorMessage())
+		}
+		return http.StatusInternalServerError, fmt.Sprintf("SES send failed: %s", apiErr.ErrorMessage())
+	}
+
+	return http.StatusInternalServerError, fmt.Sprintf("failed to send email: %v", err)
 }

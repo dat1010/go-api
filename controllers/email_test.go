@@ -10,9 +10,20 @@ import (
 	"testing"
 
 	"github.com/auth0/go-jwt-middleware/v2/validator"
+	"github.com/aws/smithy-go"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
+
+type mockAPIError struct {
+	code    string
+	message string
+}
+
+func (e mockAPIError) Error() string                 { return e.code + ": " + e.message }
+func (e mockAPIError) ErrorCode() string             { return e.code }
+func (e mockAPIError) ErrorMessage() string          { return e.message }
+func (e mockAPIError) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 type mockEmailSender struct {
 	SendEmailFunc func(ctx context.Context, req SendEmailRequest, auth0UserID string) (*SendEmailResponse, error)
@@ -42,7 +53,7 @@ func TestSendEmail(t *testing.T) {
 			assert.Equal(t, "Hello", req.Subject)
 			assert.Equal(t, "A note from NoFeed.", req.Text)
 			return &SendEmailResponse{
-				From:      emailFromAddress,
+				From:      defaultEmailFromAddress,
 				To:        req.To,
 				MessageID: "message-123",
 				Sent:      true,
@@ -65,7 +76,7 @@ func TestSendEmail(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, w.Code)
 	var res SendEmailResponse
 	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &res))
-	assert.Equal(t, emailFromAddress, res.From)
+	assert.Equal(t, defaultEmailFromAddress, res.From)
 	assert.Equal(t, "message-123", res.MessageID)
 	assert.True(t, res.Sent)
 }
@@ -125,4 +136,30 @@ func TestSendEmailReportsSenderFailure(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestSendEmailSurfacesSESMessageRejected(t *testing.T) {
+	router := setupEmailRouter(mockEmailSender{
+		SendEmailFunc: func(ctx context.Context, req SendEmailRequest, auth0UserID string) (*SendEmailResponse, error) {
+			return nil, mockAPIError{
+				code:    "MessageRejected",
+				message: "Email address is not verified.",
+			}
+		},
+	})
+	defer SetEmailSender(nil)
+
+	body, _ := json.Marshal(SendEmailRequest{
+		To:      []string{"reader@example.com"},
+		Subject: "Hello",
+		Text:    "A note from NoFeed.",
+	})
+	req := httptest.NewRequest(http.MethodPost, "/email", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "SES rejected the message")
 }

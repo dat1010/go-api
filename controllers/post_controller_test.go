@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 
 	"github.com/auth0/go-jwt-middleware/v2/validator"
@@ -51,6 +52,25 @@ func (m *mockPostService) ListPosts(author *string) ([]models.Post, error) {
 		return m.ListPostsFunc(author)
 	}
 	return nil, nil
+}
+
+func TestGetGoVersion(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	r := gin.Default()
+	r.GET("/version", GetGoVersion)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/version", http.NoBody)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var resp GoVersion
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, runtime.Version(), resp.Version)
 }
 
 func TestCreatePost_Success(t *testing.T) {

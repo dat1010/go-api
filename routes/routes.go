@@ -16,6 +16,7 @@ func RegisterRoutes(api *gin.RouterGroup) {
 
 	// Public routes
 	api.GET("/healthcheck", controllers.GetHealthCheck)
+	api.GET("/version", controllers.GetGoVersion)
 	api.GET("/secrets", controllers.GetSecret)
 	api.GET("/discord-ping", controllers.PingDiscord)
 
